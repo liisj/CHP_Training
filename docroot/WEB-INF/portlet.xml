@@ -7,7 +7,7 @@
 		<portlet-class>com.test.Training</portlet-class>
 		<init-param>
 			<name>view-template</name>
-			<value>/jsp/view.jsp</value>
+			<value>/jsp/trainingFront.jsp</value>
 		</init-param>
 		<expiration-cache>0</expiration-cache>
 		<supports>
