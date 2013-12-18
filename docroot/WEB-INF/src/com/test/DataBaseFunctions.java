@@ -349,8 +349,9 @@ public class DataBaseFunctions {
 	 * @param parameters
 	 *            JSON Object with the following parameters:<br>
 	 *            topic : (int)<br>
-	 *            session : (String, see below)<br>
 	 *            yes_count : (int)
+	 *            OPTIONAL:
+	 *            session : (String, see below, obviously not needed for first QuestionBox)<br>
 	 * @return One of the following JSON Objects:<br>
 	 *         {<br>
 	 *         result_type : "treatment",<br>
@@ -383,7 +384,8 @@ public class DataBaseFunctions {
 	public static JSONObject getNextQuestionBox(Connection con,
 			JSONObject parameters) throws SQLException {
 		String topicS = parameters.get("topic").toString();
-		String path = parameters.get("session").toString();
+		Object pathO = parameters.get("session");
+		String path = pathO==null?"":pathO.toString();
 		String yesCount = parameters.get("yes_count").toString();
 		path += yesCount;
 
@@ -534,7 +536,7 @@ public class DataBaseFunctions {
 			parameters.put("topic", 1);
 			parameters.put("session", "1_0.3_");
 			parameters.put("yes_count", "0");
-			JSONObject object = getNextQuestionBox(con, parameters);
+			JSONArray object = getTopics(con);
 			System.out.println(Helper.niceJsonPrint(object, ""));
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
