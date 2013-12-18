@@ -25,6 +25,8 @@ class DatabaseStatements {
 			"WHERE t.id = p.treatment " +
 			"AND p.topic = ? " +
 			"AND ('*.'||?)::lquery ~ p.path";
+	
+	static final String GET_TOPICS = "SELECT row_to_json(row)::text FROM (SELECT * FROM topics) row";
 
 	static final String GET_NEXT_QUESTION_BOX = "WITH paras AS (SELECT ? as topic, ?::text as pa) " +
 			"SELECT row_to_json(row) " +

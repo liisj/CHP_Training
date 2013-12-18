@@ -32,6 +32,7 @@ public class DataBaseFunctions {
 	static PreparedStatement insertPathStatement = null;
 	static PreparedStatement isPathEndStatement = null;
 	static PreparedStatement getNextQuestionBoxStatenment = null;
+	static PreparedStatement getTopicsStatenment = null;
 
 	/**
 	 * 
@@ -82,6 +83,8 @@ public class DataBaseFunctions {
 					.prepareStatement(DatabaseStatements.IS_PATH_END);
 			getNextQuestionBoxStatenment = con
 					.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX);
+			getTopicsStatenment = con
+					.prepareStatement(DatabaseStatements.GET_TOPICS);
 			return con;
 		} catch (SQLException e) {
 			throw new SQLException(String.format(
@@ -89,6 +92,31 @@ public class DataBaseFunctions {
 							+ "Function: getWebConnection()\n" + "Details: %s",
 					e.getMessage()));
 		}
+	}
+
+	public static JSONArray getTopics(Connection con) throws SQLException {
+		JSONArray resultArray = new JSONArray();
+		try {
+			ResultSet rs = getTopicsStatenment.executeQuery();
+			while (rs.next()) {
+				String s = rs.getString(1);
+
+				JSONObject obj = null;
+				try {
+					obj = (JSONObject) jsonParser.parse(s);
+				} catch (ParseException e) {
+					e.printStackTrace();
+				}
+				resultArray.add(obj);
+			}
+		} catch (SQLException e) {
+			throw new SQLException(String.format(
+					"Execution of Statement failed.\n"
+							+ "Function: insertNewQuestionPath()\n"
+							+ "Statement: %s\n" + "Details: %s",
+					insertTopicStatement.toString(), e.getMessage()));
+		}
+		return resultArray;
 	}
 
 	/**
@@ -336,23 +364,29 @@ public class DataBaseFunctions {
 	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
 	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;description : (String),<br>
 	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;questions : [<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;question : (String),<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;details : (String)<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
+	 *         ;&nbsp;{<br>
+	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
+	 *         ;&nbsp;question : (String),<br>
+	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
+	 *         ;&nbsp;details : (String)<br>
+	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
+	 *         ;&nbsp;}<br>
+	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
+	 *         ;&nbsp;...<br>
+	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
+	 *         ;&nbsp;]<br>
 	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 	 *         }
-	 * @throws SQLException 
+	 * @throws SQLException
 	 */
 	public static JSONObject getNextQuestionBox(Connection con,
 			JSONObject parameters) throws SQLException {
 		String topicS = parameters.get("topic").toString();
 		String path = parameters.get("session").toString();
 		String yesCount = parameters.get("yes_count").toString();
-		path+=yesCount;
-		
+		path += yesCount;
+
 		int topic = Integer.valueOf(topicS);
 		JSONObject obj = null;
 		try {
@@ -382,8 +416,7 @@ public class DataBaseFunctions {
 					"Execution of Statement failed.\n"
 							+ "Function: insertNewQuestionPath()\n"
 							+ "Statement: %s\n" + "Parameters: %s\n"
-							+ "Details: %s",
-							isPathEndStatement.toString(),
+							+ "Details: %s", isPathEndStatement.toString(),
 					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
 		}
 
@@ -430,11 +463,12 @@ public class DataBaseFunctions {
 		}
 
 		result.put("result_type", "question_box");
-		result.put("session", path+"."+jsonOb.remove("id").toString()+"_");
+		result.put("session", path + "." + jsonOb.remove("id").toString() + "_");
 		result.put("question_box", jsonOb);
 
 		if (resultBox.next()) {
-			System.out.println("There are more possible boxes (strange thing).");
+			System.out
+					.println("There are more possible boxes (strange thing).");
 		}
 
 		return result;
