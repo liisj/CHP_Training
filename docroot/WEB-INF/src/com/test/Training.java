@@ -1,9 +1,11 @@
 package com.test;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -24,6 +26,7 @@ import org.json.simple.JSONObject;
 
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.util.bridges.mvc.MVCPortlet;
@@ -306,16 +309,36 @@ public class Training extends MVCPortlet {
 	}
 	
 	
-	public void sendForm(ResourceRequest request, ResourceResponse response)
+	public void sendForm(ActionRequest request, ActionResponse response)
 			throws PortletException, IOException {
 		
 		String generalName = ParamUtil.getString(request, "general");
 		String generalSym = ParamUtil.getString(request, "generalSymptom_1");
 		String cat = ParamUtil.getString(request, "topCategories");
 		
+		String folder = getInitParameter("uploadFolder");
+		String realPath = getPortletContext().getRealPath("/");
+		
 		UploadPortletRequest upr = PortalUtil.getUploadPortletRequest(request);
 		File file = upr.getFile("picture_1");
 		String filename = upr.getFileName("picture_1");
+		File newFile = null;
+		newFile = new File(realPath + folder + filename);
+		System.out.println(realPath + folder + filename);
+		newFile.createNewFile();
+		InputStream in = new BufferedInputStream(upr.getFileAsStream("picture_1"));
+		FileInputStream fis = new FileInputStream(file);
+		FileOutputStream fos = new FileOutputStream(newFile);
+		
+		byte[] bytes_ = FileUtil.getBytes(in);
+		int i = fis.read(bytes_);
+		
+		while (i != -1) {
+			fos.write(bytes_, 0, i);
+			i = fis.read(bytes_);
+		}
+		fis.close();
+		fos.close();
 		
 		System.out.println("sendForm...." + generalName + " " + generalSym + " " + cat + " "
 				+ filename);
@@ -422,7 +445,7 @@ public class Training extends MVCPortlet {
 		 }
 		 
 		 if ("sendForm".equals(resourceID)) {
-			 sendForm(request, response);
+			 //sendForm(request, response);
 		 }
 	}
 
