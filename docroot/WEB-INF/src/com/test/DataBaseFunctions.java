@@ -17,14 +17,13 @@ import org.postgresql.ds.PGSimpleDataSource;
 public class DataBaseFunctions {
 
 	private static JSONParser jsonParser = new JSONParser();
-	static String URL;
-	static String DATABASE;
-	static String PORT;
-	static String USER;
-	static String PASSWORD;
+	static String URL = "localhost";
+	static String DATABASE = "learning2";
+	static String PORT = "5433";
+	static String USER = "postgres";
+	static String PASSWORD = "postgres";
 
 	private static PGSimpleDataSource pgSimpleDataSourceWeb;
-	private static boolean loaded = false;
 
 	static PreparedStatement insertQuestionBoxStatement = null;
 	static PreparedStatement insertTopicStatement = null;
@@ -40,14 +39,6 @@ public class DataBaseFunctions {
 	 * @throws SQLException
 	 */
 	public static Connection getWebConnection() throws SQLException {
-		if (!loaded) {
-			URL = "localhost";
-			PORT = "5433";
-			DATABASE = "learning2";
-			USER = "postgres";
-			PASSWORD = "postgres";
-			loaded = true;
-		}
 		Connection con = null;
 		try {
 			if (pgSimpleDataSourceWeb == null) {
@@ -61,6 +52,7 @@ public class DataBaseFunctions {
 			}
 			con = pgSimpleDataSourceWeb.getConnection();
 			con.setAutoCommit(true);
+			
 		} catch (SQLException e) {
 			throw new SQLException(String.format(
 					"Could not properly build a connection to Database.\n"
