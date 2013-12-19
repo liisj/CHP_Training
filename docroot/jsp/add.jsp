@@ -6,10 +6,10 @@
 <portlet:resourceURL id="getSubCategories" var="getSubCategories">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 </portlet:resourceURL>
-<portlet:resourceURL id="sendForm" var="sendFormURL">
+<portlet:actionURL name="sendForm" var="sendFormURL">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 	<portlet:param name="jspPage" value="/jsp/trainingFront.jsp"></portlet:param>
-</portlet:resourceURL>
+</portlet:actionURL>
 
 <html>
 <head>
@@ -92,7 +92,7 @@ $(document).on("click","#saveBtn", function() {
 		<div class="contentBody">
 			<span class="title">Add new materials</span>
 			<p></p>
-			<form name="addForm" method="POST" action='<%=sendFormURL.toString()%>'>
+			<form name="addForm" method="POST" action='<%=sendFormURL.toString()%>' enctype="multipart/form-data">
 				<div id="formDiv">
 					<label for="materialTitle">Title: </label>
 					<p></p>
