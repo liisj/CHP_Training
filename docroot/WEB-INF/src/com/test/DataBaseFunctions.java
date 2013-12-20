@@ -12,6 +12,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.postgresql.core.ResultHandler;
 import org.postgresql.ds.PGSimpleDataSource;
 
 public class DataBaseFunctions {
@@ -85,6 +86,90 @@ public class DataBaseFunctions {
 					e.getMessage()));
 		}
 	}
+	
+	public static JSONObject getNextCategories(Connection con, JSONObject parameters) {
+		String path = parameters.get("path").toString();
+		PreparedStatement isEndStatement = null;
+		try {
+			isEndStatement = con.prepareStatement("SELECT material FROM materials m WHERE (?)::ltree <@ m.category_path");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		try {
+			isEndStatement.setString(1, path);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		ResultSet rsEnd;
+		JSONObject resultObject = new JSONObject();
+		try {
+			rsEnd = isEndStatement.executeQuery();
+			if (rsEnd.next()) {
+				String material = rsEnd.getString(1);
+				resultObject.put("material", material);
+				return resultObject;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		PreparedStatement nextCategoryStatement = null;
+		
+		try {
+			nextCategoryStatement = con.prepareStatement("WITH paras AS (SELECT (?)::ltree as path) SELECT part as id, title FROM categories c, (SELECT DISTINCT subpath(category_path,0,nlevel(paras.path)+1) as part FROM materials m,paras WHERE paras.path @> m.category_path) p WHERE ('*.'||(c.id::text))::lquery ~ part");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			nextCategoryStatement.setString(1, path);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			ResultSet rs = nextCategoryStatement.executeQuery();
+			while (rs.next()) {
+				String id = rs.getString(1);
+				String title = rs.getString(2);
+				resultObject.put(id, title);
+			}
+			return resultObject;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	
+	public static JSONObject getTopCategories(Connection con) {
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = con.prepareStatement("SELECT * FROM categories c WHERE ((c.id::text)||'.*')::lquery ~ ANY (SELECT category_path FROM materials)");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		ResultSet rs;
+		JSONObject resultObject = new JSONObject();
+		try {
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				int id = rs.getInt(1);
+				String name = rs.getString(2);
+				resultObject.put(id, name);
+				System.out.println("name: "+name);
+				System.out.println(resultObject.get(id));
+			}
+			return resultObject;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 
 	public static JSONArray getTopics(Connection con) throws SQLException {
 		JSONArray resultArray = new JSONArray();
@@ -530,6 +615,22 @@ public class DataBaseFunctions {
 			parameters.put("yes_count", "0");
 			JSONArray object = getTopics(con);
 			System.out.println(Helper.niceJsonPrint(object, ""));
+			JSONObject ob = getTopCategories(con);
+			System.out.println(ob.toJSONString());
+			JSONObject in1 = new JSONObject();
+			in1.put("path", 5);
+			JSONObject res1 = getNextCategories(con, in1);
+			System.out.println(res1.toJSONString());
+			
+			JSONObject in2 = new JSONObject();
+			in2.put("path", "5.10");
+			JSONObject res2 = getNextCategories(con, in2);
+			System.out.println(res2.toJSONString());
+
+			JSONObject in3 = new JSONObject();
+			in3.put("path", "5.10.13");
+			JSONObject res3 = getNextCategories(con, in3);
+			System.out.println(res3.toJSONString());
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
