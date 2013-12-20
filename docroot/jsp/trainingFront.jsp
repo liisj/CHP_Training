@@ -118,9 +118,9 @@ $(document).ready(function() {
 		
 		var request2 = jQuery.getJSON('<%=getTopQuestions%>');
 		request2.done(function(data) {
+			console.log(data);
 			var questionsDiv = document.getElementById("questions");
 			for (var i in data) {
-				console.log(data[i].id);
 				var questionsSpan = $("<span>");
 				questionsSpan
 					.addClass("questionsSpan")
@@ -139,20 +139,13 @@ $(document).ready(function() {
 					.attr("href",hrefStr)
 					.attr("id","question_" + i)
 					.attr("name", "title")
-					.html(data[i].question)
-					.attr("value", data[i].question)
+					.html(data[i].title)
 					.appendTo(questionForm);
 				var questionId = $("<input>");
 				questionId
 					.attr("type","hidden")
 					.attr("name", "question_id")
 					.attr("value", data[i].id)
-					.appendTo(questionForm);
-				var title = $("<input>");
-				title
-					.attr("type","hidden")
-					.attr("name", "title")
-					.attr("value", data[i].question)
 					.appendTo(questionForm);
 			};
 			

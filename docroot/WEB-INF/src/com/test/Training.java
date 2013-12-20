@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -217,7 +219,7 @@ public class Training extends MVCPortlet {
 	public void getTopQuestions(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
-		
+		/*
 		JSONArray list = new JSONArray();
 		JSONObject q1 = new JSONObject();
 		JSONObject q2 = new JSONObject();
@@ -235,6 +237,21 @@ public class Training extends MVCPortlet {
 		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
         httpResponse.setContentType("application/json;charset=UTF-8");
         ServletResponseUtil.write(httpResponse, list.toJSONString());
+        */
+		
+		JSONArray list = new JSONArray();
+		
+		try {
+			Connection con = DataBaseFunctions.getWebConnection();
+			list = DataBaseFunctions.getTopics(con);
+			writeMessage(response,list);
+		} catch (SQLException e) {	
+			JSONObject errorObject =  new JSONObject();
+			errorObject.put("error", "Database");
+			errorObject.put("details", e.getMessage());
+			writeMessage(response,errorObject);
+			return;
+		}
 	}
 	
 	
