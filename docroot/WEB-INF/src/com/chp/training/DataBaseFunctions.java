@@ -1,4 +1,4 @@
-package com.test;
+package com.chp.training;
 
 import java.sql.Array;
 import java.sql.Connection;
@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.ArrayDeque;
 import java.util.Set;
 
+import org.hsqldb.types.Types;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -31,7 +32,8 @@ public class DataBaseFunctions {
 	static PreparedStatement insertTreatmentStatement = null;
 	static PreparedStatement insertPathStatement = null;
 	static PreparedStatement isPathEndStatement = null;
-	static PreparedStatement getNextQuestionBoxStatenment = null;
+	static PreparedStatement getNextQuestionBoxPathStatenment = null;
+	static PreparedStatement getNextQuestionBoxNoPathStatenment = null;
 	static PreparedStatement getTopicsStatenment = null;
 
 	/**
@@ -53,7 +55,7 @@ public class DataBaseFunctions {
 			}
 			con = pgSimpleDataSourceWeb.getConnection();
 			con.setAutoCommit(true);
-			
+
 		} catch (SQLException e) {
 			throw new SQLException(String.format(
 					"Could not properly build a connection to Database.\n"
@@ -74,8 +76,10 @@ public class DataBaseFunctions {
 					.prepareStatement(DatabaseStatements.INSERT_PATH);
 			isPathEndStatement = con
 					.prepareStatement(DatabaseStatements.IS_PATH_END);
-			getNextQuestionBoxStatenment = con
-					.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX);
+			getNextQuestionBoxPathStatenment = con
+					.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX_PATH);
+			getNextQuestionBoxNoPathStatenment = con
+					.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX_NO_PATH);
 			getTopicsStatenment = con
 					.prepareStatement(DatabaseStatements.GET_TOPICS);
 			return con;
@@ -86,12 +90,14 @@ public class DataBaseFunctions {
 					e.getMessage()));
 		}
 	}
-	
-	public static JSONObject getNextCategories(Connection con, JSONObject parameters) {
+
+	public static JSONObject getNextCategories(Connection con,
+			JSONObject parameters) {
 		String path = parameters.get("path").toString();
 		PreparedStatement isEndStatement = null;
 		try {
-			isEndStatement = con.prepareStatement("SELECT material FROM materials m WHERE (?)::ltree <@ m.category_path");
+			isEndStatement = con
+					.prepareStatement("SELECT material FROM materials m WHERE (?)::ltree <@ m.category_path");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -112,11 +118,12 @@ public class DataBaseFunctions {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 		PreparedStatement nextCategoryStatement = null;
-		
+
 		try {
-			nextCategoryStatement = con.prepareStatement("WITH paras AS (SELECT (?)::ltree as path) SELECT part as id, title FROM categories c, (SELECT DISTINCT subpath(category_path,0,nlevel(paras.path)+1) as part FROM materials m,paras WHERE paras.path @> m.category_path) p WHERE ('*.'||(c.id::text))::lquery ~ part");
+			nextCategoryStatement = con
+					.prepareStatement("WITH paras AS (SELECT (?)::ltree as path) SELECT part as id, title FROM categories c, (SELECT DISTINCT subpath(category_path,0,nlevel(paras.path)+1) as part FROM materials m,paras WHERE paras.path @> m.category_path) p WHERE ('*.'||(c.id::text))::lquery ~ part");
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -127,7 +134,7 @@ public class DataBaseFunctions {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		try {
 			ResultSet rs = nextCategoryStatement.executeQuery();
 			while (rs.next()) {
@@ -142,12 +149,12 @@ public class DataBaseFunctions {
 		}
 		return null;
 	}
-	
-	
+
 	public static JSONObject getTopCategories(Connection con) {
 		PreparedStatement pstmt = null;
 		try {
-			pstmt = con.prepareStatement("SELECT * FROM categories c WHERE ((c.id::text)||'.*')::lquery ~ ANY (SELECT category_path FROM materials)");
+			pstmt = con
+					.prepareStatement("SELECT * FROM categories c WHERE ((c.id::text)||'.*')::lquery ~ ANY (SELECT category_path FROM materials)");
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -167,7 +174,6 @@ public class DataBaseFunctions {
 		}
 		return null;
 	}
-	
 
 	public static JSONArray getTopics(Connection con) throws SQLException {
 		JSONArray resultArray = new JSONArray();
@@ -424,10 +430,9 @@ public class DataBaseFunctions {
 	 * @param parameters
 	 *            JSON Object with the following parameters:<br>
 	 *            topic : (int)<br>
-	 *            CONDITIONAL MANDATORY:
-	 *            yes_count : (int, mandatory if and only if session is provided)
-	 *            OPTIONAL:
-	 *            session : (String, see below, obviously not needed for first QuestionBox)<br>
+	 *            CONDITIONAL MANDATORY: yes_count : (int, mandatory if and only
+	 *            if session is provided) OPTIONAL: session : (String, see
+	 *            below, obviously not needed for first QuestionBox)<br>
 	 * @return One of the following JSON Objects:<br>
 	 *         {<br>
 	 *         result_type : "treatment",<br>
@@ -461,75 +466,82 @@ public class DataBaseFunctions {
 			JSONObject parameters) throws SQLException {
 		String topicS = parameters.get("topic").toString();
 		Object pathO = parameters.get("session");
-		String path = pathO==null?"":pathO.toString();
+		String path = pathO == null ? "" : pathO.toString();
 		Object yesCountO = parameters.get("yes_count");
-		String yesCount = yesCountO==null?"":yesCountO.toString();
+		String yesCount = yesCountO == null ? "" : yesCountO.toString();
 		path += yesCount;
 
 		int topic = Integer.valueOf(topicS);
 		JSONObject obj = null;
-		try {
-			isPathEndStatement.setInt(1, topic);
-			isPathEndStatement.setString(2, path);
-
-		} catch (SQLException e) {
-			throw new SQLException(String.format(
-					"Adding parameters to the statement failed\n"
-							+ "Function: insertNewQuestionPath()\n"
-							+ "Statement: %s\n" + "Parameters: %s\n"
-							+ "Details: %s", isPathEndStatement.toString(),
-					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
-		}
 		JSONObject result = new JSONObject();
-		ResultSet rs;
+		if (pathO != null) {
+			try {
+				isPathEndStatement.setInt(1, topic);
+				isPathEndStatement.setString(2, path);
+
+			} catch (SQLException e) {
+				throw new SQLException(String.format(
+						"Adding parameters to the statement failed\n"
+								+ "Function: getNextQuestionBox()\n"
+								+ "Statement: %s\n" + "Parameters: %s\n"
+								+ "Details: %s", isPathEndStatement.toString(),
+						Helper.niceJsonPrint(parameters, ""), e.getMessage()));
+			}
+			ResultSet rs;
+			try {
+				rs = isPathEndStatement.executeQuery();
+				if (rs.next()) {
+					String treatment = rs.getString(1);
+					result.put("result_type", "treatment");
+					result.put("treatment", treatment);
+					return result;
+				}
+			} catch (SQLException e) {
+				throw new SQLException(String.format(
+						"Execution of Statement failed.\n"
+								+ "Function: getNextQuestionBox()\n"
+								+ "Statement: %s\n" + "Parameters: %s\n"
+								+ "Details: %s", isPathEndStatement.toString(),
+						Helper.niceJsonPrint(parameters, ""), e.getMessage()));
+			}
+		}
+		PreparedStatement p = null;
 		try {
-			rs = isPathEndStatement.executeQuery();
-			if (rs.next()) {
-				String treatment = rs.getString(1);
-				result.put("result_type", "treatment");
-				result.put("treatment", treatment);
-				return result;
+			if (pathO == null) {
+				p = getNextQuestionBoxNoPathStatenment;
+				getNextQuestionBoxNoPathStatenment.setInt(1, topic);
+			} else {
+				p = getNextQuestionBoxPathStatenment;
+				getNextQuestionBoxPathStatenment.setInt(1, topic);
+				getNextQuestionBoxPathStatenment.setString(2, path);
 			}
 		} catch (SQLException e) {
 			throw new SQLException(String.format(
-					"Execution of Statement failed.\n"
-							+ "Function: insertNewQuestionPath()\n"
-							+ "Statement: %s\n" + "Parameters: %s\n"
-							+ "Details: %s", isPathEndStatement.toString(),
-					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
-		}
-
-		try {
-			getNextQuestionBoxStatenment.setInt(1, topic);
-			getNextQuestionBoxStatenment.setString(2, path);
-
-		} catch (SQLException e) {
-			throw new SQLException(String.format(
 					"Adding parameters to the statement failed\n"
-							+ "Function: insertNewQuestionPath()\n"
+							+ "Function: getNextQuestionBox()\n"
 							+ "Statement: %s\n" + "Parameters: %s\n"
 							+ "Details: %s",
-					getNextQuestionBoxStatenment.toString(),
+					p.toString(),
 					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
 		}
 		ResultSet resultBox;
 		try {
-			resultBox = getNextQuestionBoxStatenment.executeQuery();
+			resultBox = p.executeQuery();
 			if (!resultBox.next()) {
 				throw new SQLException(String.format(
 						"Statement did not return expected Result.\n"
-								+ "Function: insertNewQuestionPath()\n"
+								+ "Function: getNextQuestionBox()\n"
 								+ "Statement: %s\n" + "Parameters: %s\n",
-						getNextQuestionBoxStatenment.toString(),
+						p.toString(),
 						Helper.niceJsonPrint(parameters, "")));
 			}
 		} catch (SQLException e) {
 			throw new SQLException(String.format(
 					"Execution of Statement failed.\n"
-							+ "Function: insertNewQuestionPath()\n"
+							+ "Function: getNextQuestionBox()\n"
 							+ "Statement: %s\n" + "Parameters: %s\n"
 							+ "Details: %s",
-					getNextQuestionBoxStatenment.toString(),
+					p.toString(),
 					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
 		}
 
@@ -611,8 +623,11 @@ public class DataBaseFunctions {
 			// insertNewQuestionPath(con, questionBox1);
 			JSONObject parameters = new JSONObject();
 			parameters.put("topic", 1);
-			parameters.put("session", "1_0.3_");
-			parameters.put("yes_count", "0");
+			// parameters.put("session", "1_0.3_");
+			// parameters.put("yes_count", "0");
+			JSONObject o = getNextQuestionBox(con, parameters);
+			System.out.println(o.toJSONString());
+
 			JSONArray object = getTopics(con);
 			System.out.println(Helper.niceJsonPrint(object, ""));
 			JSONObject ob = getTopCategories(con);
@@ -621,7 +636,7 @@ public class DataBaseFunctions {
 			in1.put("path", 5);
 			JSONObject res1 = getNextCategories(con, in1);
 			System.out.println(res1.toJSONString());
-			
+
 			JSONObject in2 = new JSONObject();
 			in2.put("path", "5.10");
 			JSONObject res2 = getNextCategories(con, in2);
