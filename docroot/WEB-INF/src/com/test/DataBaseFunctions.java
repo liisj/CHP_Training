@@ -160,8 +160,6 @@ public class DataBaseFunctions {
 				int id = rs.getInt(1);
 				String name = rs.getString(2);
 				resultObject.put(id, name);
-				System.out.println("name: "+name);
-				System.out.println(resultObject.get(id));
 			}
 			return resultObject;
 		} catch (SQLException e) {
@@ -426,7 +424,8 @@ public class DataBaseFunctions {
 	 * @param parameters
 	 *            JSON Object with the following parameters:<br>
 	 *            topic : (int)<br>
-	 *            yes_count : (int)
+	 *            CONDITIONAL MANDATORY:
+	 *            yes_count : (int, mandatory if and only if session is provided)
 	 *            OPTIONAL:
 	 *            session : (String, see below, obviously not needed for first QuestionBox)<br>
 	 * @return One of the following JSON Objects:<br>
@@ -463,7 +462,8 @@ public class DataBaseFunctions {
 		String topicS = parameters.get("topic").toString();
 		Object pathO = parameters.get("session");
 		String path = pathO==null?"":pathO.toString();
-		String yesCount = parameters.get("yes_count").toString();
+		Object yesCountO = parameters.get("yes_count");
+		String yesCount = yesCountO==null?"":yesCountO.toString();
 		path += yesCount;
 
 		int topic = Integer.valueOf(topicS);

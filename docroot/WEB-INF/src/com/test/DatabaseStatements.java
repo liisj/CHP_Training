@@ -28,7 +28,7 @@ class DatabaseStatements {
 	
 	static final String GET_TOPICS = "SELECT row_to_json(row)::text FROM (SELECT * FROM topics) row";
 
-	static final String GET_NEXT_QUESTION_BOX = "WITH paras AS (SELECT ? as topic, ?::text as pa) " +
+	static final String GET_NEXT_QUESTION_BOX = "WITH paras AS (SELECT ? as topic, CASE WHEN ? IS NULL THEN '*' ELSE '*.'||paras.pa||'.*' END as pa) " +
 			"SELECT row_to_json(row) " +
 			"FROM (SELECT id, q.description,array_to_json(questions) as questions " +
 			"FROM question_boxes q " +
