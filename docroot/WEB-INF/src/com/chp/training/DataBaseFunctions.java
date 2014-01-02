@@ -1,4 +1,4 @@
-package com.test;
+package com.chp.training;
 
 import java.sql.Array;
 import java.sql.Connection;

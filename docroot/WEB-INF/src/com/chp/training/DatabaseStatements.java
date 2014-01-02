@@ -1,4 +1,4 @@
-package com.test;
+package com.chp.training;
 
 class DatabaseStatements {
 	static final String INSERT_QUESTION_BOX = "INSERT INTO question_boxes " +
