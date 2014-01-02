@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -17,6 +19,7 @@ import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletException;
 import javax.portlet.PortletPreferences;
+import javax.portlet.PortletRequest;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
 import javax.servlet.http.HttpServletResponse;
@@ -39,7 +42,7 @@ public class Training extends MVCPortlet {
 	private static DateFormat dateFormat = new SimpleDateFormat("[HH:mm:ss]");
 	private static Logger logger = Logger.getLogger("InfoLogging");
 	
-	private static JSONObject requestToJSONObject(ResourceRequest request) {
+	private static JSONObject requestToJSONObject(PortletRequest request) {
 		JSONObject result = new JSONObject();
 		Enumeration<String> parametersE = request.getParameterNames();
 		while (parametersE.hasMoreElements()) {
@@ -83,6 +86,21 @@ public class Training extends MVCPortlet {
 	public void getTopCategories(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
+		JSONObject responseJSON = new JSONObject();
+		
+		try {
+			Connection con = DataBaseFunctions.getWebConnection();
+			responseJSON = DataBaseFunctions.getTopCategories(con);
+			writeMessage(response,responseJSON);
+		} catch (SQLException e) {	
+			JSONObject errorObject =  new JSONObject();
+			errorObject.put("error", "Database");
+			errorObject.put("details", e.getMessage());
+			writeMessage(response,errorObject);
+			return;
+		}
+		
+		/*
 		JSONArray list = new JSONArray();
         JSONObject cat1 = new JSONObject();
         JSONObject cat2 = new JSONObject();
@@ -108,15 +126,34 @@ public class Training extends MVCPortlet {
 		 HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
          httpResponse.setContentType("application/json;charset=UTF-8");
          ServletResponseUtil.write(httpResponse, list.toJSONString());
-		
+		*/
 	}
 	
 	
 	public void getSubCategories(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
-		Date date = new Date();
-		System.out.println(dateFormat.format(date));
 		
+		String index = request.getParameter("index");
+		JSONObject responseJSON = new JSONObject();
+		JSONObject params = requestToJSONObject(request);
+		System.out.println(params.toJSONString());
+		
+		try {
+			Connection con = DataBaseFunctions.getWebConnection();
+			responseJSON = DataBaseFunctions.getNextCategories(con, params);
+			responseJSON.put("index",index);
+			System.out.println(responseJSON.toJSONString());
+			writeMessage(response,responseJSON);
+		} catch (SQLException e) {	
+			JSONObject errorObject =  new JSONObject();
+			errorObject.put("error", "Database");
+			errorObject.put("details", e.getMessage());
+			writeMessage(response,errorObject);
+			return;
+		}
+		
+		
+		/*
 		String catId = request.getParameter("category_id");
 		
 		// IMPORTANT do not delete
@@ -135,7 +172,7 @@ public class Training extends MVCPortlet {
         cat3.put("id", 30);
         cat3.put("name", "Medical and Developmental Disorders");
         cat4.put("id", 40);
-        cat4.put("name", "Psychosocial Stressors");
+        cat4.put("name", "Psychosocial Stressors")
         cat5.put("id", 50);
         cat5.put("name", "Emotional and Social Functioning");
         list.add(cat1);
@@ -151,7 +188,7 @@ public class Training extends MVCPortlet {
         HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
         httpResponse.setContentType("application/json;charset=UTF-8");
         ServletResponseUtil.write(httpResponse, responseJSON.toJSONString());
-		
+		*/
 	}
 	
 	
@@ -214,10 +251,10 @@ public class Training extends MVCPortlet {
 	}
 	
 	
-	public void getTopics(ResourceRequest request, ResourceResponse response)
+	public void getTopQuestions(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
-		
+		/*
 		JSONArray list = new JSONArray();
 		JSONObject q1 = new JSONObject();
 		JSONObject q2 = new JSONObject();
@@ -235,9 +272,106 @@ public class Training extends MVCPortlet {
 		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
         httpResponse.setContentType("application/json;charset=UTF-8");
         ServletResponseUtil.write(httpResponse, list.toJSONString());
+        */
+		
+		JSONArray list = new JSONArray();
+		
+		try {
+			Connection con = DataBaseFunctions.getWebConnection();
+			list = DataBaseFunctions.getTopics(con);
+			writeMessage(response,list);
+		} catch (SQLException e) {	
+			JSONObject errorObject =  new JSONObject();
+			errorObject.put("error", "Database");
+			errorObject.put("details", e.getMessage());
+			writeMessage(response,errorObject);
+			return;
+		}
 	}
 	
 	
+	public void getSubQuestions(ResourceRequest request, ResourceResponse response)
+			throws PortletException, IOException {
+
+		JSONObject responseJSON = new JSONObject();
+		JSONObject params = requestToJSONObject(request);
+		
+		try {
+			Connection con = DataBaseFunctions.getWebConnection();
+			// TODO Peter has changed this function, needs to be updated
+			//responseJSON = DataBaseFunctions.getNextQuestionBox(con, requestToJSONObject(request));
+			
+			writeMessage(response,responseJSON);
+		} catch (SQLException e) {	
+			JSONObject errorObject =  new JSONObject();
+			errorObject.put("error", "Database");
+			errorObject.put("details", e.getMessage());
+			writeMessage(response,errorObject);
+			return;
+		}
+
+		/*
+		if (request.getParameter("question_id").equals("2")) {
+			
+			responseJSON.put("title", "Cough or difficult breathing classified");
+			responseJSON.put("next", "3");
+			JSONObject q1 = new JSONObject();
+			JSONObject q2 = new JSONObject();
+			JSONObject q3 = new JSONObject();
+			q1.put("id", "11");
+			q1.put("question", "Are there any general danger signs present?");
+			q1.put("description", "Child is unable to drink or breastfeed;child vomits everything; child has had or is having convulsions; " +
+					"child is lethargic or unconscious.");
+			q2.put("id", "22");
+			q2.put("question", "Is there chest indrawing?");
+			q2.put("description", "If present, give a trial of rapid acting inhaled bronchodilator for up to three times 15-20 minutes apart. " +
+					"Count the breaths again and look for chest indrawing again, then classify.");
+			q3.put("id", "33");
+			q3.put("question", "Is there stridor in a calm child?");
+			list.add(q1);
+			list.add(q2);
+			list.add(q3);
+		}
+		else if (request.getParameter("question_id").equals("3")) {
+			getTreatment(request, response);
+			return;
+		}
+		else {
+			responseJSON.put("title", "Classify cough or difficult breathing");
+			responseJSON.put("next", "2");
+			JSONObject q1 = new JSONObject();
+			JSONObject q2 = new JSONObject();
+			q1.put("id", "11");
+			q1.put("question", "Does the child have fast breathing?");
+			q1.put("description", "If the child is 2-12 months old and they breathe 50 breaths per minute or more; " +
+					"if the child 1-5 years old and they breathe 40 breaths per minute or more <p/>");
+			q2.put("id", "22");
+			q2.put("question", "Does the child have a cough?");
+			list.add(q1);
+			list.add(q2);
+		}
+		
+		responseJSON.put("questions", list);
+			
+		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
+	    httpResponse.setContentType("application/json;charset=UTF-8");
+	    ServletResponseUtil.write(httpResponse, responseJSON.toJSONString());
+	    */
+	}
+	
+	
+	public void getTreatment(ResourceRequest request, ResourceResponse response)
+			throws PortletException, IOException {
+		
+		JSONObject responseJSON = new JSONObject();
+		responseJSON.put("title","Severe pneumonia or very severe disease");
+		responseJSON.put("treatment", "Give first dose of an appropriate antibiotic; Refer URGENTLY to hospital.");
+		
+		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
+	    httpResponse.setContentType("application/json;charset=UTF-8");
+	    ServletResponseUtil.write(httpResponse, responseJSON.toJSONString());
+	
+	}
 	
 	
 	public void sendForm(ActionRequest request, ActionResponse response)
@@ -247,32 +381,37 @@ public class Training extends MVCPortlet {
 		String generalSym = ParamUtil.getString(request, "generalSymptom_1");
 		String cat = ParamUtil.getString(request, "topCategories");
 		
+		JSONObject params = requestToJSONObject(request);
+		System.out.println(params.toJSONString());
+		
+		// Getting a file
 		String folder = getInitParameter("uploadFolder");
 		String realPath = getPortletContext().getRealPath("/");
-		
 		UploadPortletRequest upr = PortalUtil.getUploadPortletRequest(request);
 		File file = upr.getFile("picture_1");
-		String filename = upr.getFileName("picture_1");
-		File newFile = null;
-		newFile = new File(realPath + folder + filename);
-		System.out.println(realPath + folder + filename);
-		newFile.createNewFile();
-		InputStream in = new BufferedInputStream(upr.getFileAsStream("picture_1"));
-		FileInputStream fis = new FileInputStream(file);
-		FileOutputStream fos = new FileOutputStream(newFile);
-		
-		byte[] bytes_ = FileUtil.getBytes(in);
-		int i = fis.read(bytes_);
-		
-		while (i != -1) {
-			fos.write(bytes_, 0, i);
-			i = fis.read(bytes_);
+		if (file != null) {
+			String filename = upr.getFileName("picture_1");
+			File newFile = null;
+			newFile = new File(realPath + folder + filename);
+			System.out.println(realPath + folder + filename);
+			newFile.createNewFile();
+			InputStream in = new BufferedInputStream(upr.getFileAsStream("picture_1"));
+			FileInputStream fis = new FileInputStream(file);
+			FileOutputStream fos = new FileOutputStream(newFile);
+			
+			byte[] bytes_ = FileUtil.getBytes(in);
+			int i = fis.read(bytes_);
+			
+			while (i != -1) {
+				fos.write(bytes_, 0, i);
+				i = fis.read(bytes_);
+			}
+			fis.close();
+			fos.close();
+			
+			System.out.println("sendForm...." + generalName + " " + generalSym + " " + cat + " "
+					+ filename);
 		}
-		fis.close();
-		fos.close();
-		
-		System.out.println("sendForm...." + generalName + " " + generalSym + " " + cat + " "
-				+ filename);
 	}
 		
 	// Very necessary function, please don't delete anything in here
@@ -364,8 +503,15 @@ public class Training extends MVCPortlet {
 		 }
 		 
 		 if ("getTopQuestions".equals(resourceID)) {
-			 getTopics(request, response);
+			 getTopQuestions(request, response);
 		 }
+		 
+		 if ("getSubQuestions".equals(resourceID)) {
+			 getSubQuestions(request, response);
+		 }
+		 
+		 if ("getTreatment".equals(resourceID)) {
+			 getTreatment(request, response);		 }
 		 
 		 if ("sendForm".equals(resourceID)) {
 			 //sendForm(request, response);

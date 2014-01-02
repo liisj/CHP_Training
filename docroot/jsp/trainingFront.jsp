@@ -49,17 +49,21 @@ ActionRequest.ACTION_NAME, "search");*/
 
 $(document).ready(function() {
 	
-	// fill categories pane
+	// Fill categories pane
 	
+	// Query the top level of categories
 	var request = jQuery.getJSON('<%=getTopCategories%>');
-	request.done(function(data) {
+	request.done(function(data1) {
+		console.log(data1);
 		var categoryDiv = document.getElementById("categoriesAccordion");
-		for (var i in data) {
+		var keys = Object.keys(data1);
+		for (var i in keys) {
+			var key = parseInt(keys[i]);
 			var cat1 = $("<h3>");
 			cat1
 				.appendTo(categoryDiv)
-				.html(data[i].name)
-				.attr("cat_id",data[i].id)
+				.html(data1[key])
+				.attr("cat_id",key)
 				.attr("id", "cat1_" + i)
 				.attr("i",i)
 				.addClass("catTitle");
@@ -67,97 +71,104 @@ $(document).ready(function() {
 			innerDiv
 				.appendTo(categoryDiv)
 				.attr("id", "innerDiv1_" + i);
-		}
-		$("#categoriesAccordion").accordion({collapsible : true, heightStyle: "content", active: false});
-		
-		var subRequest = $.getJSON('<%=getSubCategories%>', {"index" : 4});
-		subRequest.done(function(data) {
-			var innerDiv_super = document.getElementById("innerDiv1_" + data.index);
-			for (var j in data.objects) {
-				var cat2 = $("<h3>");
-				cat2
-					.appendTo(innerDiv_super)
-					.html(data.objects[j].name)
-					.attr("cat_id",data.objects[j].id)
-					.attr("id", "cat2_" + j)
-					.attr("j",j)
-					.addClass("subCatTitle");
-				var innerDiv2 = $("<div>");
-				innerDiv2
-					.appendTo(innerDiv_super)
-					.attr("id", "innerDiv2_" + data.index + "_" + j);
-			}
-			$("#innerDiv1_" + data.index).accordion({collapsible : true, heightStyle: "content", active: false});
-
-			var materialsRequest = $.getJSON('<%=getMaterialTitles%>', {"index" : 4});
-			materialsRequest.done(function(data) {
-				var innerDiv_super2 = document.getElementById("innerDiv2_4_" + data.index);
-				for (var k in data.objects) {
-					var matForm = $("<form>");
-					matForm
-						.attr("method", "POST")
-						.attr("name", "matForm_" + k)
-						.attr("action", '<%=materialURL%>')
-						.appendTo(innerDiv_super2);
-					var mat = $("<button>");
-					mat
-						.text(data.objects[k].title)
-						.attr("mat_id",data.objects[k].id)
-						.attr("id", "mat_" + k)
-						.attr("k",k)
-						.attr("type","submit")
-						.addClass("matTitle")
-						.button()
-						.appendTo(matForm);
-					$("<p>").appendTo(innerDiv_super2);
+			
+			// For each, query the second level of categories
+			var subRequest = $.getJSON('<%=getSubCategories%>', 
+					{"index" : i,
+					"path" : key});
+			subRequest.done(function(data2) {
+				console.log(data2);
+				var innerDiv_super = document.getElementById("innerDiv1_" + data2.index);
+				for (var j in data2.objects) {
+					var cat2 = $("<h3>");
+					cat2
+						.appendTo(innerDiv_super)
+						.html(data2.objects[j].name)
+						.attr("cat_id",data2.objects[j].id)
+						.attr("id", "cat2_" + j)
+						.attr("j",j)
+						.addClass("subCatTitle");
+					var innerDiv2 = $("<div>");
+					innerDiv2
+						.appendTo(innerDiv_super)
+						.attr("id", "innerDiv2_" + data2.index + "_" + j);
+					
+					// For each, query the material titles that are in that category
+					var materialsRequest = $.getJSON('<%=getMaterialTitles%>', {"index" : j});
+					materialsRequest.done(function(data3) {
+						var innerDiv_super2 = 
+							document.getElementById("innerDiv2_" + data2.index + "_" + data3.index);
+						for (var k in data3.objects) {
+							var matForm = $("<form>");
+							matForm
+								.attr("method", "POST")
+								.attr("name", "matForm_" + k)
+								.attr("action", '<%=materialURL%>')
+								.appendTo(innerDiv_super2);
+							var mat = $("<button>");
+							mat
+								.text(data3.objects[k].title)
+								.attr("mat_id",data3.objects[k].id)
+								.attr("id", "mat_" + k)
+								.attr("k",k)
+								.attr("type","submit")
+								.addClass("matTitle")
+								.button()
+								.appendTo(matForm);
+							$("<p>").appendTo(innerDiv_super2);
+						}
+					});
 				}
+				$("#innerDiv1_" + data2.index)
+					.accordion({
+						collapsible : true, 
+						heightStyle: "content", 
+						active: false});
 			});
-		});
+		}
+		$("#categoriesAccordion")
+			.accordion({
+				collapsible : true, 
+				heightStyle: "content", 
+				active: false});
 		
 		addAddLink($("#categories"), "addForm1", "<%=addURL.toString()%>");
+	});
+	
+	var request2 = jQuery.getJSON('<%=getTopQuestions%>');
+	request2.done(function(data) {
+		console.log(data);
+		var questionsDiv = document.getElementById("questions");
+		for (var i in data) {
+			var questionsSpan = $("<span>");
+			questionsSpan
+				.addClass("questionsSpan")
+				.appendTo(questionsDiv);
+			var questionForm = $("<form>");
+			questionForm
+				.addClass("questionForm")
+				.attr("name", "questionForm_" + i)
+				.attr("method","POST")
+				.attr("action","<%=subQuestionsURL.toString()%>")
+				.appendTo(questionsSpan);
+			var questionLink = $("<a>");
+			var hrefStr = "javascript:document.forms['questionForm_" + i + "'].submit()"; 
+			questionLink
+				.addClass("questionLink")
+				.attr("href",hrefStr)
+				.attr("id","question_" + i)
+				.attr("name", "title")
+				.html(data[i].title)
+				.appendTo(questionForm);
+			var questionId = $("<input>");
+			questionId
+				.attr("type","hidden")
+				.attr("name", "question_id")
+				.attr("value", data[i].id)
+				.appendTo(questionForm);
+		};
 		
-		var request2 = jQuery.getJSON('<%=getTopQuestions%>');
-		request2.done(function(data) {
-			var questionsDiv = document.getElementById("questions");
-			for (var i in data) {
-				console.log(data[i].id);
-				var questionsSpan = $("<span>");
-				questionsSpan
-					.addClass("questionsSpan")
-					.appendTo(questionsDiv);
-				var questionForm = $("<form>");
-				questionForm
-					.addClass("questionForm")
-					.attr("name", "questionForm_" + i)
-					.attr("method","POST")
-					.attr("action","<%=subQuestionsURL.toString()%>")
-					.appendTo(questionsSpan);
-				var questionLink = $("<a>");
-				var hrefStr = "javascript:document.forms['questionForm_" + i + "'].submit()"; 
-				questionLink
-					.addClass("questionLink")
-					.attr("href",hrefStr)
-					.attr("id","question_" + i)
-					.attr("name", "title")
-					.html(data[i].question)
-					.attr("value", data[i].question)
-					.appendTo(questionForm);
-				var questionId = $("<input>");
-				questionId
-					.attr("type","hidden")
-					.attr("name", "question_id")
-					.attr("value", data[i].id)
-					.appendTo(questionForm);
-				var title = $("<input>");
-				title
-					.attr("type","hidden")
-					.attr("name", "title")
-					.attr("value", data[i].question)
-					.appendTo(questionForm);
-			};
-			
-			addAddLink(questionsDiv, "addForm2", "<%=addURL2.toString()%>");
-		});
+		addAddLink(questionsDiv, "addForm2", "<%=addURL2.toString()%>");
 	});
 });
 
@@ -175,7 +186,7 @@ function addAddLink(div, name, url) {
 		.attr("action",url)
 		.appendTo(addSpan);
 	var addLink = $("<a>");
-	var linkStr = "javascript:document.forms['" + name + "'].submit()"
+	var linkStr = "javascript:document.forms['" + name + "'].submit()";
 	addLink
 		.addClass("questionLink")
 		.attr("href",linkStr)

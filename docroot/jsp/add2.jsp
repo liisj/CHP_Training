@@ -12,8 +12,8 @@ sendFormURL.setParameter("jspPage", "/jsp/trainingFront.jsp");
 <head>
 <script type="text/javascript">
 $(document).ready(function() {
-	generalSymptomIndex = 0;
-	diagnosisIndex = 0;
+	generalSymptomIndex = 1;
+	diagnosisIndex = 1;
 	addSubDiagnosis("subDiagnoses");
 	$(".addSymptom").button();
 	$("#saveBtn").button();
@@ -22,7 +22,10 @@ $(document).ready(function() {
 });
 
 $(document).on("click",".addSymptom", function() {
-	addSymptomField($(this).attr("div"));
+	addSymptomField($(this).attr("div"), $(this).attr("type"), 
+			$(this).attr("diagnosisIndex"), $(this).attr("symptomIndex"));
+	var symptomIndex = parseInt($(this).attr("symptomIndex")) + 1;
+	$(this).attr("symptomIndex", symptomIndex);
 });
 
 $(document).on("click",".addDiagnosis", function() {
@@ -33,36 +36,42 @@ $(document).on("click","#saveBtn", function() {
 	document.forms['addForm'].submit();
 });
 
-function addSymptomField(divId) {
-	console.log("adding symptoms for " + divId);
+function addSymptomField(divId, type, currentDiag, symptomIndex) {
+	var index;
+	if (type == "general") {
+		index = generalSymptomIndex;
+		generalSymptomIndex += 1;
+	}
+	else if (type == "sub") {
+		index = currentDiag + "_" + symptomIndex;
+	}
 	var form = document.getElementById(divId);
 	var nameInLbl = $("<label>");
 	nameInLbl
 		.text("Symptom name: ")
-		.attr("for", "generalSymptom_" + generalSymptomIndex)
-		.addClass("generalSymptom")
+		.attr("for", type + "Symptom_" + index)
+		.addClass(type + "Symptom")
 		.appendTo(form);
 	var nameIn = $("<input>");
 	nameIn
 		.attr("type","text")
-		.attr("id", "generalSymptom_" + generalSymptomIndex)
-		.attr("name", "generalSymptom_" + generalSymptomIndex)
-		.addClass("generalSymptom")
+		.attr("id", type + "Symptom_" + index)
+		.attr("name", type + "Symptom_" + index)
+		.addClass(type + "Symptom")
 		.appendTo(form);
 	var descrInLbl = $("<label>");
 	descrInLbl
 		.text("Description: ")
-		.attr("for", "gsDescr_" + generalSymptomIndex)
-		.addClass("gsDescr")
+		.attr("for", type + "Descr_" + index)
+		.addClass(type + "Descr")
 		.appendTo(form);
 	var descrIn = $("<input>");
 	descrIn
 		.attr("type","text")
-		.attr("id", "gsDescr_" + generalSymptomIndex)
-		.addClass("gsDescr")
+		.attr("id", type + "Descr_" + index)
+		.addClass(type + "Descr")
 		.appendTo(form);
 	$("<p>").appendTo(form);
-	generalSymptomIndex += 1;
 }
 
 function addSubDiagnosis(divId) {
@@ -97,6 +106,9 @@ function addSubDiagnosis(divId) {
 	var addSympBtn = $("<span>");
 	addSympBtn
 		.addClass("addSymptom")
+		.attr("type", "sub")
+		.attr("diagnosisIndex", diagnosisIndex)
+		.attr("symptomIndex", 1)
 		.attr("div","symptomDiv_" + diagnosisIndex)
 		.appendTo(symptomBox)
 		.html("New symptom")
@@ -131,7 +143,7 @@ General diagnosis class: <input type="text" name="general">
 <div id="generalSymptoms">
 <span>Symptoms</span><p/>
 </div>
-<span class="addSymptom" id="generalAddSympBtn" div="generalSymptoms">New symptom</span>
+<span class="addSymptom" id="generalAddSympBtn" div="generalSymptoms" type="general">New symptom</span>
 <p/>
 <label for="generalNr">How many symptoms need to be present to give this diagnosis? </label>
 <input type="text" id="generalNr"/>

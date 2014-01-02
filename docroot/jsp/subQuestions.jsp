@@ -27,7 +27,10 @@ String title = (String) request.getAttribute("title");
 $(document).ready(function() {
 	q_index = 0;
 	console.log("question_id: "+'<%=questionId%>');
-	var params = {"question_id" : '<%=questionId%>'};
+	var params = {
+			"topic" : '<%=questionId%>',
+			"yes_count" : 0
+			};
 	var request = jQuery.getJSON('<%=getSubQuestions%>', params);
 	request.done(function(data) {
 		displayQuestions(data);
@@ -36,7 +39,9 @@ $(document).ready(function() {
 
 $(document).on("click",".nextBtn",function(){
 	q_index += 1;
-	var params = {"question_id" : $(this).attr("question_id")};
+	var params = {
+			"topic" : $(this).attr("question_id"),
+			"yes_count" : 0};
 	var request = $.getJSON('<%=getSubQuestions%>', params);
 	request.done(function(data) {
 		displayQuestions(data);
@@ -99,6 +104,7 @@ function displayQuestions(data) {
 			.attr("name","ans_" + i)
 			.attr("id","ans_" + i + "1")
 			.attr("question_id",data.questions[i].id)
+			.attr("questionSet",q_index)
 			.appendTo(qAnsP);
 		var ansLbl1 = $("<label>");
 		ansLbl1
@@ -112,6 +118,7 @@ function displayQuestions(data) {
 			.attr("name","ans_" + i)
 			.attr("id","ans_" + i + "2")
 			.attr("question_id",data.questions[i].id)
+			.attr("questionSet",q_index)
 			.appendTo(qAnsP);
 		var ansLbl2 = $("<label>");
 		ansLbl2
@@ -123,7 +130,8 @@ function displayQuestions(data) {
 			
 	var nextBtn = $("<button>");
 	nextBtn
-		.attr("question_id", data.next)
+		.attr("questionSet",q_index)
+		.attr("topic", "x")
 		.addClass("nextBtn")
 		.text("Next")
 		.appendTo(subsection)
