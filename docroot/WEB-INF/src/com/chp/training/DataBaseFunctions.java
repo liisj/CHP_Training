@@ -568,44 +568,6 @@ public class DataBaseFunctions {
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
-		// JSONObject questionBox1 = new JSONObject();
-		// JSONObject questionBox2 = new JSONObject();
-		// JSONObject questionBox3 = new JSONObject();
-		// JSONObject questionBox4 = new JSONObject();
-		//
-		// questionBox4.put("questions",
-		// getSampleQuestionArray(new String[] { "Question 1" }));
-		// questionBox4
-		// .put("description",
-		// "This question box appeared after giving no yes at all in 2 questionboxes.");
-		// questionBox4.put("0", "You just say no to everything");
-		// questionBox4.put("1", "Finally a yes after all these no's");
-		//
-		// questionBox2.put("questions",
-		// getSampleQuestionArray(new String[] { "Question 1" }));
-		// questionBox2.put("description",
-		// "This question box appeared after giving 1 \"yes\".");
-		// questionBox2.put("0", "1 Yes at all is really enough..");
-		// questionBox2.put("1", "Always 1 yes per question, good");
-		//
-		// questionBox3.put("questions",
-		// getSampleQuestionArray(new String[] { "Question 1" }));
-		// questionBox3
-		// .put("description",
-		// "This question box appeared after giving no yes at all in 1 questionsbox.");
-		// questionBox3.put("0", questionBox4);
-		// questionBox3.put("1", "Yay, at least 2nd box got a yes.");
-		//
-		// questionBox1.put("questions", getSampleQuestionArray(new String[] {
-		// "Question 1", "Question 2" }));
-		// questionBox1.put("description", "This is the very first question");
-		// questionBox1.put("0", questionBox3);
-		// questionBox1.put("1", questionBox2);
-		// questionBox1.put("2", "Don't say yes to everything");
-		// questionBox1.put("topic_title", "Peter's Area");
-		// questionBox1
-		// .put("topic_description", "This topic is just for testing.");
-		//
 		Connection con;
 		try {
 			con = getWebConnection();
@@ -651,7 +613,7 @@ public class DataBaseFunctions {
 			result = getNextAction(con, parameters);
 			System.out.println("Questions answered with yes: 2");
 			System.out.println("Next Action: " + result.get("action"));
-			System.out.println(result.toJSONString());
+			System.out.println(Helper.niceJsonPrint(result, ""));
 			System.out.println();
 
 			

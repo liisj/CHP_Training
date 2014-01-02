@@ -214,7 +214,7 @@ public class Training extends MVCPortlet {
 	}
 	
 	
-	public void getTopQuestions(ResourceRequest request, ResourceResponse response)
+	public void getTopics(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
 		
@@ -238,75 +238,6 @@ public class Training extends MVCPortlet {
 	}
 	
 	
-	public void getSubQuestions(ResourceRequest request, ResourceResponse response)
-			throws PortletException, IOException {
-
-		Date date = new Date();
-		System.out.println(dateFormat.format(date));
-		System.out.println("getSubQuestions");
-		JSONObject responseJSON = new JSONObject();
-		JSONArray list = new JSONArray();
-		
-		if (request.getParameter("question_id").equals("2")) {
-			
-			responseJSON.put("title", "Cough or difficult breathing classified");
-			responseJSON.put("next", "3");
-			JSONObject q1 = new JSONObject();
-			JSONObject q2 = new JSONObject();
-			JSONObject q3 = new JSONObject();
-			q1.put("id", "11");
-			q1.put("question", "Are there any general danger signs present?");
-			q1.put("description", "Child is unable to drink or breastfeed;child vomits everything; child has had or is having convulsions; " +
-					"child is lethargic or unconscious.");
-			q2.put("id", "22");
-			q2.put("question", "Is there chest indrawing?");
-			q2.put("description", "If present, give a trial of rapid acting inhaled bronchodilator for up to three times 15-20 minutes apart. " +
-					"Count the breaths again and look for chest indrawing again, then classify.");
-			q3.put("id", "33");
-			q3.put("question", "Is there stridor in a calm child?");
-			list.add(q1);
-			list.add(q2);
-			list.add(q3);
-		}
-		else if (request.getParameter("question_id").equals("3")) {
-			getTreatment(request, response);
-			return;
-		}
-		else {
-			responseJSON.put("title", "Classify cough or difficult breathing");
-			responseJSON.put("next", "2");
-			JSONObject q1 = new JSONObject();
-			JSONObject q2 = new JSONObject();
-			q1.put("id", "11");
-			q1.put("question", "Does the child have fast breathing?");
-			q1.put("description", "If the child is 2-12 months old and they breathe 50 breaths per minute or more; " +
-					"if the child 1-5 years old and they breathe 40 breaths per minute or more <p/>");
-			q2.put("id", "22");
-			q2.put("question", "Does the child have a cough?");
-			list.add(q1);
-			list.add(q2);
-		}
-		
-		responseJSON.put("questions", list);
-			
-		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
-	    httpResponse.setContentType("application/json;charset=UTF-8");
-	    ServletResponseUtil.write(httpResponse, responseJSON.toJSONString());
-	}
-	
-	
-	public void getTreatment(ResourceRequest request, ResourceResponse response)
-			throws PortletException, IOException {
-		
-		JSONObject responseJSON = new JSONObject();
-		responseJSON.put("title","Severe pneumonia or very severe disease");
-		responseJSON.put("treatment", "Give first dose of an appropriate antibiotic; Refer URGENTLY to hospital.");
-		
-		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
-	    httpResponse.setContentType("application/json;charset=UTF-8");
-	    ServletResponseUtil.write(httpResponse, responseJSON.toJSONString());
-	
-	}
 	
 	
 	public void sendForm(ActionRequest request, ActionResponse response)
@@ -433,15 +364,7 @@ public class Training extends MVCPortlet {
 		 }
 		 
 		 if ("getTopQuestions".equals(resourceID)) {
-			 getTopQuestions(request, response);
-		 }
-		 
-		 if ("getSubQuestions".equals(resourceID)) {
-			 getSubQuestions(request, response);
-		 }
-		 
-		 if ("getTreatment".equals(resourceID)) {
-			 getTreatment(request, response);
+			 getTopics(request, response);
 		 }
 		 
 		 if ("sendForm".equals(resourceID)) {
