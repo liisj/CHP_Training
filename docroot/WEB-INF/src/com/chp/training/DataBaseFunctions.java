@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.util.ArrayDeque;
 import java.util.Set;
 
-import org.hsqldb.types.Types;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;

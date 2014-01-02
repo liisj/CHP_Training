@@ -4,7 +4,7 @@
 	<portlet>
 		<portlet-name>Training</portlet-name>
 		<display-name>Training</display-name>
-		<portlet-class>com.test.Training</portlet-class>
+		<portlet-class>com.chp.training.Training</portlet-class>
 		<init-param>
 			<name>view-template</name>
 			<value>/jsp/trainingFront.jsp</value>
