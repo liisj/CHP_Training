@@ -298,7 +298,9 @@ public class Training extends MVCPortlet {
 		
 		try {
 			Connection con = DataBaseFunctions.getWebConnection();
-			responseJSON = DataBaseFunctions.getNextQuestionBox(con, requestToJSONObject(request));
+			// TODO Peter has changed this function, needs to be updated
+			//responseJSON = DataBaseFunctions.getNextQuestionBox(con, requestToJSONObject(request));
+			
 			writeMessage(response,responseJSON);
 		} catch (SQLException e) {	
 			JSONObject errorObject =  new JSONObject();
@@ -509,8 +511,7 @@ public class Training extends MVCPortlet {
 		 }
 		 
 		 if ("getTreatment".equals(resourceID)) {
-			 getTreatment(request, response);
-		 }
+			 getTreatment(request, response);		 }
 		 
 		 if ("sendForm".equals(resourceID)) {
 			 //sendForm(request, response);

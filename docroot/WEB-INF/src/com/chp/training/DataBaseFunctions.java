@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.ArrayDeque;
 import java.util.Set;
 
+import org.hsqldb.types.Types;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -31,7 +32,8 @@ public class DataBaseFunctions {
 	static PreparedStatement insertTreatmentStatement = null;
 	static PreparedStatement insertPathStatement = null;
 	static PreparedStatement isPathEndStatement = null;
-	static PreparedStatement getNextQuestionBoxStatenment = null;
+	static PreparedStatement getNextQuestionBoxPathStatenment = null;
+	static PreparedStatement getNextQuestionBoxNoPathStatenment = null;
 	static PreparedStatement getTopicsStatenment = null;
 
 	/**
@@ -53,7 +55,7 @@ public class DataBaseFunctions {
 			}
 			con = pgSimpleDataSourceWeb.getConnection();
 			con.setAutoCommit(true);
-			
+
 		} catch (SQLException e) {
 			throw new SQLException(String.format(
 					"Could not properly build a connection to Database.\n"
@@ -74,8 +76,10 @@ public class DataBaseFunctions {
 					.prepareStatement(DatabaseStatements.INSERT_PATH);
 			isPathEndStatement = con
 					.prepareStatement(DatabaseStatements.IS_PATH_END);
-			getNextQuestionBoxStatenment = con
-					.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX);
+			getNextQuestionBoxPathStatenment = con
+					.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX_PATH);
+			getNextQuestionBoxNoPathStatenment = con
+					.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX_NO_PATH);
 			getTopicsStatenment = con
 					.prepareStatement(DatabaseStatements.GET_TOPICS);
 			return con;
@@ -86,12 +90,14 @@ public class DataBaseFunctions {
 					e.getMessage()));
 		}
 	}
-	
-	public static JSONObject getNextCategories(Connection con, JSONObject parameters) {
+
+	public static JSONObject getNextCategories(Connection con,
+			JSONObject parameters) {
 		String path = parameters.get("path").toString();
 		PreparedStatement isEndStatement = null;
 		try {
-			isEndStatement = con.prepareStatement("SELECT material FROM materials m WHERE (?)::ltree <@ m.category_path");
+			isEndStatement = con
+					.prepareStatement("SELECT material FROM materials m WHERE (?)::ltree <@ m.category_path");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -112,11 +118,12 @@ public class DataBaseFunctions {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 		PreparedStatement nextCategoryStatement = null;
-		
+
 		try {
-			nextCategoryStatement = con.prepareStatement("WITH paras AS (SELECT (?)::ltree as path) SELECT part as id, title FROM categories c, (SELECT DISTINCT subpath(category_path,0,nlevel(paras.path)+1) as part FROM materials m,paras WHERE paras.path @> m.category_path) p WHERE ('*.'||(c.id::text))::lquery ~ part");
+			nextCategoryStatement = con
+					.prepareStatement("WITH paras AS (SELECT (?)::ltree as path) SELECT part as id, title FROM categories c, (SELECT DISTINCT subpath(category_path,0,nlevel(paras.path)+1) as part FROM materials m,paras WHERE paras.path @> m.category_path) p WHERE ('*.'||(c.id::text))::lquery ~ part");
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -127,7 +134,7 @@ public class DataBaseFunctions {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		try {
 			ResultSet rs = nextCategoryStatement.executeQuery();
 			while (rs.next()) {
@@ -142,12 +149,12 @@ public class DataBaseFunctions {
 		}
 		return null;
 	}
-	
-	
+
 	public static JSONObject getTopCategories(Connection con) {
 		PreparedStatement pstmt = null;
 		try {
-			pstmt = con.prepareStatement("SELECT * FROM categories c WHERE ((c.id::text)||'.*')::lquery ~ ANY (SELECT category_path FROM materials)");
+			pstmt = con
+					.prepareStatement("SELECT * FROM categories c WHERE ((c.id::text)||'.*')::lquery ~ ANY (SELECT category_path FROM materials)");
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -160,8 +167,6 @@ public class DataBaseFunctions {
 				int id = rs.getInt(1);
 				String name = rs.getString(2);
 				resultObject.put(id, name);
-				System.out.println("name: "+name);
-				System.out.println(resultObject.get(id));
 			}
 			return resultObject;
 		} catch (SQLException e) {
@@ -169,7 +174,6 @@ public class DataBaseFunctions {
 		}
 		return null;
 	}
-	
 
 	public static JSONArray getTopics(Connection con) throws SQLException {
 		JSONArray resultArray = new JSONArray();
@@ -426,9 +430,9 @@ public class DataBaseFunctions {
 	 * @param parameters
 	 *            JSON Object with the following parameters:<br>
 	 *            topic : (int)<br>
-	 *            yes_count : (int)
-	 *            OPTIONAL:
-	 *            session : (String, see below, obviously not needed for first QuestionBox)<br>
+	 *            CONDITIONAL MANDATORY: yes_count : (int, mandatory if and only
+	 *            if session is provided) OPTIONAL: session : (String, see
+	 *            below, obviously not needed for first QuestionBox)<br>
 	 * @return One of the following JSON Objects:<br>
 	 *         {<br>
 	 *         result_type : "treatment",<br>
@@ -457,100 +461,97 @@ public class DataBaseFunctions {
 	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 	 *         }
 	 * @throws SQLException
+	 * @throws ParseException 
 	 */
-	public static JSONObject getNextQuestionBox(Connection con,
-			JSONObject parameters) throws SQLException {
-		String topicS = parameters.get("topic").toString();
-		Object pathO = parameters.get("session");
-		String path = pathO==null?"":pathO.toString();
-		String yesCount = parameters.get("yes_count").toString();
-		path += yesCount;
+	public static JSONObject getNextAction(Connection con,
+			JSONObject parameters) throws SQLException, ParseException {
+		String questionboxS = parameters.get("questionbox").toString();
+		Integer questionBox = Integer.valueOf(questionboxS);
+		String yesCountS = parameters.get("yes_count").toString();
+		Integer yesCount = Integer.valueOf(yesCountS);
 
-		int topic = Integer.valueOf(topicS);
-		JSONObject obj = null;
+		PreparedStatement pstmt = null;
 		try {
-			isPathEndStatement.setInt(1, topic);
-			isPathEndStatement.setString(2, path);
-
+			pstmt = con.prepareStatement("SELECT proceed_result(?,?)");
 		} catch (SQLException e) {
-			throw new SQLException(String.format(
-					"Adding parameters to the statement failed\n"
-							+ "Function: insertNewQuestionPath()\n"
-							+ "Statement: %s\n" + "Parameters: %s\n"
-							+ "Details: %s", isPathEndStatement.toString(),
-					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
-		}
-		JSONObject result = new JSONObject();
-		ResultSet rs;
-		try {
-			rs = isPathEndStatement.executeQuery();
-			if (rs.next()) {
-				String treatment = rs.getString(1);
-				result.put("result_type", "treatment");
-				result.put("treatment", treatment);
-				return result;
-			}
-		} catch (SQLException e) {
-			throw new SQLException(String.format(
-					"Execution of Statement failed.\n"
-							+ "Function: insertNewQuestionPath()\n"
-							+ "Statement: %s\n" + "Parameters: %s\n"
-							+ "Details: %s", isPathEndStatement.toString(),
-					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
-		}
-
-		try {
-			getNextQuestionBoxStatenment.setInt(1, topic);
-			getNextQuestionBoxStatenment.setString(2, path);
-
-		} catch (SQLException e) {
-			throw new SQLException(String.format(
-					"Adding parameters to the statement failed\n"
-							+ "Function: insertNewQuestionPath()\n"
-							+ "Statement: %s\n" + "Parameters: %s\n"
-							+ "Details: %s",
-					getNextQuestionBoxStatenment.toString(),
-					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
-		}
-		ResultSet resultBox;
-		try {
-			resultBox = getNextQuestionBoxStatenment.executeQuery();
-			if (!resultBox.next()) {
-				throw new SQLException(String.format(
-						"Statement did not return expected Result.\n"
-								+ "Function: insertNewQuestionPath()\n"
-								+ "Statement: %s\n" + "Parameters: %s\n",
-						getNextQuestionBoxStatenment.toString(),
-						Helper.niceJsonPrint(parameters, "")));
-			}
-		} catch (SQLException e) {
-			throw new SQLException(String.format(
-					"Execution of Statement failed.\n"
-							+ "Function: insertNewQuestionPath()\n"
-							+ "Statement: %s\n" + "Parameters: %s\n"
-							+ "Details: %s",
-					getNextQuestionBoxStatenment.toString(),
-					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
-		}
-
-		String s = resultBox.getString(1);
-		JSONObject jsonOb = null;
-		try {
-			jsonOb = (JSONObject) jsonParser.parse(s);
-		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-
-		result.put("result_type", "question_box");
-		result.put("session", path + "." + jsonOb.remove("id").toString() + "_");
-		result.put("question_box", jsonOb);
-
-		if (resultBox.next()) {
-			System.out
-					.println("There are more possible boxes (strange thing).");
+		
+		try {
+			pstmt.setInt(1, questionBox);
+			pstmt.setInt(2, yesCount);
+		} catch (SQLException e) {
+			throw new SQLException(String.format(
+					"Adding parameters to the statement failed\n"
+							+ "Statement: %s\n"
+							+ "Function: getNextQuestionBox()\n"
+							+ "Parameters: %s\n" + "Details: %s",
+							pstmt.toString(),
+					Helper.niceJsonPrint(parameters, ""),
+					e.getMessage()));
 		}
-
-		return result;
+		
+		ResultSet rs;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (SQLException e) {
+			throw new SQLException(String.format(
+					"Execution of Statement failed.\n"
+							+ "Function: getNextQuestionBox()\n"
+							+ "Statement: %s\n"
+							+ "Parameters: %s\n" + "Details: %s",
+							pstmt.toString(),
+					Helper.niceJsonPrint(parameters, ""),
+					e.getMessage()));
+		}
+		if (!rs.next()) {
+			return null;
+		}
+		String jsonString = rs.getString(1);
+		JSONObject json = (JSONObject) jsonParser.parse(jsonString);
+		return json;
+	}
+	
+	public static JSONObject getFirstQuestionBox(Connection con, JSONObject parameters) throws SQLException, ParseException {
+		String topicS = parameters.get("topic").toString();
+		Integer topic = Integer.valueOf(topicS);
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = con.prepareStatement("SELECT get_first_box(?)");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		try {
+			pstmt.setInt(1, topic);
+		} catch (SQLException e) {
+			throw new SQLException(String.format(
+					"Adding parameters to the statement failed\n"
+							+ "Statement: %s\n"
+							+ "Function: getFirstQuestionBox()\n"
+							+ "Parameters: %s\n" + "Details: %s",
+							pstmt.toString(),
+					Helper.niceJsonPrint(parameters, ""),
+					e.getMessage()));
+		}
+		ResultSet rs;
+		try {
+			rs = pstmt.executeQuery();
+		} catch (SQLException e) {
+			throw new SQLException(String.format(
+					"Execution of Statement failed.\n"
+							+ "Function: getFirstQuestionBox()\n"
+							+ "Statement: %s\n"
+							+ "Parameters: %s\n" + "Details: %s",
+							pstmt.toString(),
+					Helper.niceJsonPrint(parameters, ""),
+					e.getMessage()));
+		}
+		if (!rs.next()) {
+			return null;
+		}
+		String jsonString = rs.getString(1);
+		JSONObject json = (JSONObject) jsonParser.parse(jsonString);
+		return json;
 	}
 
 	private static JSONArray getSampleQuestionArray(String[] questions) {
@@ -567,71 +568,75 @@ public class DataBaseFunctions {
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
-		// JSONObject questionBox1 = new JSONObject();
-		// JSONObject questionBox2 = new JSONObject();
-		// JSONObject questionBox3 = new JSONObject();
-		// JSONObject questionBox4 = new JSONObject();
-		//
-		// questionBox4.put("questions",
-		// getSampleQuestionArray(new String[] { "Question 1" }));
-		// questionBox4
-		// .put("description",
-		// "This question box appeared after giving no yes at all in 2 questionboxes.");
-		// questionBox4.put("0", "You just say no to everything");
-		// questionBox4.put("1", "Finally a yes after all these no's");
-		//
-		// questionBox2.put("questions",
-		// getSampleQuestionArray(new String[] { "Question 1" }));
-		// questionBox2.put("description",
-		// "This question box appeared after giving 1 \"yes\".");
-		// questionBox2.put("0", "1 Yes at all is really enough..");
-		// questionBox2.put("1", "Always 1 yes per question, good");
-		//
-		// questionBox3.put("questions",
-		// getSampleQuestionArray(new String[] { "Question 1" }));
-		// questionBox3
-		// .put("description",
-		// "This question box appeared after giving no yes at all in 1 questionsbox.");
-		// questionBox3.put("0", questionBox4);
-		// questionBox3.put("1", "Yay, at least 2nd box got a yes.");
-		//
-		// questionBox1.put("questions", getSampleQuestionArray(new String[] {
-		// "Question 1", "Question 2" }));
-		// questionBox1.put("description", "This is the very first question");
-		// questionBox1.put("0", questionBox3);
-		// questionBox1.put("1", questionBox2);
-		// questionBox1.put("2", "Don't say yes to everything");
-		// questionBox1.put("topic_title", "Peter's Area");
-		// questionBox1
-		// .put("topic_description", "This topic is just for testing.");
-		//
 		Connection con;
 		try {
 			con = getWebConnection();
-			// insertNewQuestionPath(con, questionBox1);
-			JSONObject parameters = new JSONObject();
-			parameters.put("topic", 1);
-			parameters.put("session", "1_0.3_");
-			parameters.put("yes_count", "0");
-			JSONArray object = getTopics(con);
-			System.out.println(Helper.niceJsonPrint(object, ""));
-			JSONObject ob = getTopCategories(con);
-			System.out.println(ob.toJSONString());
-			JSONObject in1 = new JSONObject();
-			in1.put("path", 5);
-			JSONObject res1 = getNextCategories(con, in1);
-			System.out.println(res1.toJSONString());
 			
-			JSONObject in2 = new JSONObject();
-			in2.put("path", "5.10");
-			JSONObject res2 = getNextCategories(con, in2);
-			System.out.println(res2.toJSONString());
 
-			JSONObject in3 = new JSONObject();
-			in3.put("path", "5.10.13");
-			JSONObject res3 = getNextCategories(con, in3);
-			System.out.println(res3.toJSONString());
+			JSONArray object = getTopics(con);
+			System.out.println("All topics");
+			System.out.println(Helper.niceJsonPrint(object, ""));
+			
+			
+			JSONObject parameters;
+			JSONObject result;
+			
+			parameters = new JSONObject();
+			parameters.put("topic", 1);
+			result = getFirstQuestionBox(con, parameters);
+			System.out.println("First Question Box (delivered with topic details):");
+			System.out.println(result.toJSONString());
+			System.out.println();
+			
+
+			parameters = new JSONObject();
+			parameters.put("questionbox", 1);
+			parameters.put("yes_count", 0);
+			result = getNextAction(con, parameters);
+			System.out.println("Questions answered with yes: 0");
+			System.out.println("Next Action: " + result.get("action"));
+			System.out.println(result.toJSONString());
+			System.out.println();
+
+			parameters = new JSONObject();
+			parameters.put("questionbox", 1);
+			parameters.put("yes_count", 1);
+			result = getNextAction(con, parameters);
+			System.out.println("Questions answered with yes: 1");
+			System.out.println("Next Action: " + result.get("action"));
+			System.out.println(result.toJSONString());
+			System.out.println();
+
+			parameters = new JSONObject();
+			parameters.put("questionbox", 1);
+			parameters.put("yes_count", 2);
+			result = getNextAction(con, parameters);
+			System.out.println("Questions answered with yes: 2");
+			System.out.println("Next Action: " + result.get("action"));
+			System.out.println(Helper.niceJsonPrint(result, ""));
+			System.out.println();
+
+			
+//			JSONObject ob = getTopCategories(con);
+//			System.out.println(ob.toJSONString());
+//			JSONObject in1 = new JSONObject();
+//			in1.put("path", 5);
+//			JSONObject res1 = getNextCategories(con, in1);
+//			System.out.println(res1.toJSONString());
+//
+//			JSONObject in2 = new JSONObject();
+//			in2.put("path", "5.10");
+//			JSONObject res2 = getNextCategories(con, in2);
+//			System.out.println(res2.toJSONString());
+//
+//			JSONObject in3 = new JSONObject();
+//			in3.put("path", "5.10.13");
+//			JSONObject res3 = getNextCategories(con, in3);
+//			System.out.println(res3.toJSONString());
 		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
