@@ -37,6 +37,7 @@ public class DataBaseFunctions {
 	static PreparedStatement getNextQuestionBoxPathStatenment = null;
 	static PreparedStatement getNextQuestionBoxNoPathStatenment = null;
 	static PreparedStatement getTopicsStatenment = null;
+	static Connection connection = null;
 
 	/**
 	 * 
@@ -44,55 +45,56 @@ public class DataBaseFunctions {
 	 * @throws SQLException
 	 */
 	public static Connection getWebConnection() throws SQLException {
-		Connection con = null;
-		try {
-			if (pgSimpleDataSourceWeb == null) {
-				pgSimpleDataSourceWeb = new PGSimpleDataSource();
-				pgSimpleDataSourceWeb.setServerName(URL);
-				pgSimpleDataSourceWeb.setPortNumber(Integer.valueOf(PORT));
-				pgSimpleDataSourceWeb.setDatabaseName(DATABASE);
-				pgSimpleDataSourceWeb.setUser(USER);
-				pgSimpleDataSourceWeb.setPassword(PASSWORD);
+		if (pgSimpleDataSourceWeb == null) {
+			pgSimpleDataSourceWeb = new PGSimpleDataSource();
+			pgSimpleDataSourceWeb.setServerName(URL);
+			pgSimpleDataSourceWeb.setPortNumber(Integer.valueOf(PORT));
+			pgSimpleDataSourceWeb.setDatabaseName(DATABASE);
+			pgSimpleDataSourceWeb.setUser(USER);
+			pgSimpleDataSourceWeb.setPassword(PASSWORD);
 
+		}
+		if (connection == null) {
+			try {
+				connection = pgSimpleDataSourceWeb.getConnection();
+				connection.setAutoCommit(true);
+			} catch (SQLException e) {
+				throw new SQLException(String.format(
+						"Could not properly build a connection to Database.\n"
+								+ "Function: getWebConnection()\n"
+								+ "Details: %s\n"
+								+ "pgSimpleDataSourceWeb == null: %B\n"
+								+ "con == null: %B", e.getMessage(),
+						pgSimpleDataSourceWeb == null, connection == null));
 			}
-			con = pgSimpleDataSourceWeb.getConnection();
-			con.setAutoCommit(true);
+			try {
+				insertTopicStatement = connection
+						.prepareStatement(DatabaseStatements.INSERT_TOPIC);
+				insertQuestionBoxStatement = connection
+						.prepareStatement(DatabaseStatements.INSERT_QUESTION_BOX);
+				insertTreatmentStatement = connection
+						.prepareStatement(DatabaseStatements.INSERT_TREATMENT);
+				insertPathStatement = connection
+						.prepareStatement(DatabaseStatements.INSERT_PATH);
+				insertActionStatement = connection
+						.prepareStatement(DatabaseStatements.INSERT_ACTION);
+				isPathEndStatement = connection
+						.prepareStatement(DatabaseStatements.IS_PATH_END);
+				getNextQuestionBoxPathStatenment = connection
+						.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX_PATH);
+				getNextQuestionBoxNoPathStatenment = connection
+						.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX_NO_PATH);
+				getTopicsStatenment = connection
+						.prepareStatement(DatabaseStatements.GET_TOPICS);
+			} catch (SQLException e) {
+				throw new SQLException(String.format(
+						"Could not prepare the statements.\n"
+								+ "Function: getWebConnection()\n"
+								+ "Details: %s", e.getMessage()));
+			}
+		}
+		return connection;
 
-		} catch (SQLException e) {
-			throw new SQLException(String.format(
-					"Could not properly build a connection to Database.\n"
-							+ "Function: getWebConnection()\n"
-							+ "Details: %s\n"
-							+ "pgSimpleDataSourceWeb == null: %B\n"
-							+ "con == null: %B", e.getMessage(),
-					pgSimpleDataSourceWeb == null, con == null));
-		}
-		try {
-			insertTopicStatement = con
-					.prepareStatement(DatabaseStatements.INSERT_TOPIC);
-			insertQuestionBoxStatement = con
-					.prepareStatement(DatabaseStatements.INSERT_QUESTION_BOX);
-			insertTreatmentStatement = con
-					.prepareStatement(DatabaseStatements.INSERT_TREATMENT);
-			insertPathStatement = con
-					.prepareStatement(DatabaseStatements.INSERT_PATH);
-			insertActionStatement = con
-					.prepareStatement(DatabaseStatements.INSERT_ACTION);
-			isPathEndStatement = con
-					.prepareStatement(DatabaseStatements.IS_PATH_END);
-			getNextQuestionBoxPathStatenment = con
-					.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX_PATH);
-			getNextQuestionBoxNoPathStatenment = con
-					.prepareStatement(DatabaseStatements.GET_NEXT_QUESTION_BOX_NO_PATH);
-			getTopicsStatenment = con
-					.prepareStatement(DatabaseStatements.GET_TOPICS);
-			return con;
-		} catch (SQLException e) {
-			throw new SQLException(String.format(
-					"Could not prepare the statements.\n"
-							+ "Function: getWebConnection()\n" + "Details: %s",
-					e.getMessage()));
-		}
 	}
 
 	public static JSONObject getNextCategories(Connection con,
@@ -244,7 +246,8 @@ public class DataBaseFunctions {
 			JSONObject topic = (JSONObject) first.get("topic");
 			String topic_title = topic.get("title").toString();
 			Object topic_descriptionOb = topic.get("description");
-			String topic_description = topic_descriptionOb==null?"":topic_descriptionOb.toString();
+			String topic_description = topic_descriptionOb == null ? ""
+					: topic_descriptionOb.toString();
 			insertTopicStatement.setString(1, topic_title);
 			insertTopicStatement.setString(2, topic_description);
 		} catch (SQLException e) {
@@ -395,24 +398,29 @@ public class DataBaseFunctions {
 						insertActionStatement.setInt(4, topic);
 						insertActionStatement.execute();
 					} else if ("treatment".equals(action)) {
-						JSONObject treatmentObject = (JSONObject) valueObject.get("treatment");
-//						String treatment_title = treatmentObject.get("title").toString();
-						String treatment_description = treatmentObject.get("description").toString();
-						
-						
-						
+						JSONObject treatmentObject = (JSONObject) valueObject
+								.get("treatment");
+						// String treatment_title =
+						// treatmentObject.get("title").toString();
+						String treatment_description = treatmentObject.get(
+								"description").toString();
+
 						try {
-//							insertTreatmentStatement.setString(1, treatment_title);
-							insertTreatmentStatement.setString(1, treatment_description);
+							// insertTreatmentStatement.setString(1,
+							// treatment_title);
+							insertTreatmentStatement.setString(1,
+									treatment_description);
 						} catch (SQLException e) {
-							throw new SQLException(String.format(
-									"Adding parameters to the statement failed\n"
-											+ "Statement: %s\n"
-											+ "Function: insertNewQuestionPath()\n"
-											+ "Parameters: %s\n" + "Details: %s",
-									insertTreatmentStatement.toString(),
-									Helper.niceJsonPrint(parameters, ""),
-									e.getMessage()));
+							throw new SQLException(
+									String.format(
+											"Adding parameters to the statement failed\n"
+													+ "Statement: %s\n"
+													+ "Function: insertNewQuestionPath()\n"
+													+ "Parameters: %s\n"
+													+ "Details: %s",
+											insertTreatmentStatement.toString(),
+											Helper.niceJsonPrint(parameters, ""),
+											e.getMessage()));
 						}
 						ResultSet rs2;
 						try {
@@ -424,18 +432,22 @@ public class DataBaseFunctions {
 														+ "Function: insertNewQuestionPath()\n"
 														+ "Statement: %s\n"
 														+ "Parameters: %s\n",
-												insertTreatmentStatement.toString(),
-												Helper.niceJsonPrint(parameters, "")));
+												insertTreatmentStatement
+														.toString(), Helper
+														.niceJsonPrint(
+																parameters, "")));
 
 						} catch (SQLException e) {
-							throw new SQLException(String.format(
-									"Execution of Statement failed.\n"
-											+ "Function: insertNewQuestionPath()\n"
-											+ "Statement: %s\n"
-											+ "Parameters: %s\n" + "Details: %s",
-									insertTreatmentStatement.toString(),
-									Helper.niceJsonPrint(parameters, ""),
-									e.getMessage()));
+							throw new SQLException(
+									String.format(
+											"Execution of Statement failed.\n"
+													+ "Function: insertNewQuestionPath()\n"
+													+ "Statement: %s\n"
+													+ "Parameters: %s\n"
+													+ "Details: %s",
+											insertTreatmentStatement.toString(),
+											Helper.niceJsonPrint(parameters, ""),
+											e.getMessage()));
 						}
 						int treatmentID = rs2.getInt(1);
 
@@ -444,14 +456,11 @@ public class DataBaseFunctions {
 						insertActionStatement.setString(3, "treatment");
 						insertActionStatement.setInt(4, treatmentID);
 						insertActionStatement.execute();
-						
+
 					}
 				}
 			}
 		}
-				
-				
-				
 
 	}
 
