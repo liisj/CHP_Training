@@ -396,14 +396,14 @@ public class DataBaseFunctions {
 						insertActionStatement.execute();
 					} else if ("treatment".equals(action)) {
 						JSONObject treatmentObject = (JSONObject) valueObject.get("treatment");
-						String treatment_title = treatmentObject.get("title").toString();
-						String treatment_text = treatmentObject.get("text").toString();
+//						String treatment_title = treatmentObject.get("title").toString();
+						String treatment_description = treatmentObject.get("description").toString();
 						
 						
 						
 						try {
-							insertTreatmentStatement.setString(1, treatment_title);
-							insertTreatmentStatement.setString(2, treatment_text);
+//							insertTreatmentStatement.setString(1, treatment_title);
+							insertTreatmentStatement.setString(1, treatment_description);
 						} catch (SQLException e) {
 							throw new SQLException(String.format(
 									"Adding parameters to the statement failed\n"

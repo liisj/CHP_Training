@@ -12,8 +12,8 @@ class DatabaseStatements {
 			"RETURNING id";
 
 	static final String INSERT_TREATMENT = "INSERT INTO treatments " +
-			"(id,title,description) " +
-			"VALUES (default,?,?) " +
+			"(id,description) " +
+			"VALUES (default,?) " +
 			"RETURNING id";
 
 	static final String INSERT_PATH = "INSERT INTO paths " +
