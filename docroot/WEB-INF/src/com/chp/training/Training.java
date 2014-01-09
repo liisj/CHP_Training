@@ -10,9 +10,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Enumeration;
-import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.portlet.ActionRequest;
@@ -20,6 +18,7 @@ import javax.portlet.ActionResponse;
 import javax.portlet.PortletException;
 import javax.portlet.PortletPreferences;
 import javax.portlet.PortletRequest;
+import javax.portlet.PortletResponse;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
 import javax.servlet.http.HttpServletResponse;
@@ -55,21 +54,21 @@ public class Training extends MVCPortlet {
 		return result;
 	}
 
-	private static void writeMessage(ResourceResponse response, JSONObject jsonObject) throws IOException {
+	private static void writeMessage(PortletResponse response, JSONObject jsonObject) throws IOException {
 		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
 		httpResponse.setContentType("application/json;charset=UTF-8");
 		ServletResponseUtil.write(httpResponse, jsonObject.toJSONString());	
 	}
 
 
-	private static void writeMessage(ResourceResponse response, JSONArray jsonArray) throws IOException {
+	private static void writeMessage(PortletResponse response, JSONArray jsonArray) throws IOException {
 		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
 		httpResponse.setContentType("application/json;charset=UTF-8");
 		ServletResponseUtil.write(httpResponse, jsonArray.toJSONString());
 	}
 
 
-	private static void writeMessage(ResourceResponse response, String string) throws IOException {
+	private static void writeMessage(PortletResponse response, String string) throws IOException {
 		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
 		httpResponse.setContentType("application/plain;charset=UTF-8");
 		ServletResponseUtil.write(httpResponse, string);	
@@ -423,6 +422,18 @@ public class Training extends MVCPortlet {
 		extractDiagnoses(1, request, realParams, yesCount, "sub", totalSymptoms);
 		
 		System.out.println("realParams: " + realParams.toJSONString());
+		
+		try {
+			Connection con = DataBaseFunctions.getWebConnection();
+			DataBaseFunctions.insertNewQuestionPath(con, realParams);
+		} catch (SQLException e) {	
+			JSONObject errorObject =  new JSONObject();
+			errorObject.put("error", "Database");
+			errorObject.put("details", e.getMessage());
+			writeMessage(response,errorObject);
+			return;
+		}
+		
 		
 		// Getting a file and saving it to the "uploads" folder
 		
