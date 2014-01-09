@@ -1,5 +1,6 @@
 package com.chp.training;
 
+
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -288,8 +289,13 @@ public class DataBaseFunctions {
 					.remove("questions");
 			System.out.println("Questions: " + jsonQuestions.toString());
 			Object descriptionO = questionBoxJob.remove("description");
-			String description = descriptionO == null ? "" : descriptionO
-					.toString();
+			if (descriptionO==null) {
+				throw new IllegalArgumentException(String.format(
+						"description (of the questionBox) was not provided as parameter.\n"
+								+ "Function: insertNewQuestionPath()\n" + "Parameters: %s",
+						Helper.niceJsonPrint(parameters, "")));
+			}
+			String description = descriptionO.toString();
 			int questionNum = jsonQuestions.size();
 			String[] questionStrings = new String[questionNum];
 			int count = 0;
