@@ -287,8 +287,8 @@ public class DataBaseFunctions {
 			JSONArray jsonQuestions = (JSONArray) questionBoxJob
 					.remove("questions");
 			System.out.println("Questions: " + jsonQuestions.toString());
-			String description = questionBoxJob.remove("description")
-					.toString();
+			Object descriptionO = questionBoxJob.remove("description");
+			String description = descriptionO==null?"":descriptionO.toString();
 			int questionNum = jsonQuestions.size();
 			String[] questionStrings = new String[questionNum];
 			int count = 0;
