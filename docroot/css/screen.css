@@ -148,7 +148,6 @@ p {padding: 5px 0;}
 
 .nextBtn {
 	margin-top: 10px;
-	margin-bottom: 30px;
 }
 
 .treatmentText {
@@ -195,4 +194,21 @@ padding-left: 20px;
 .treatmentLbl {
 	align-self: center;
 	vertical-align: top;
+}
+
+.ask {
+	font-size: 14px;
+	margin-bottom: 20px;
+	margin-top: 10px;
+}
+
+.accordionUI, .treatmentText {
+	padding-top: 20px;
+	border: 1px solid #fbd850;
+	border-radius: 4px;
+	margin-top: 20px;
+	padding-left: 25px;
+	padding-right: 25px;
+	margin-bottom: 40px;
+	padding-bottom: 20px;
 }

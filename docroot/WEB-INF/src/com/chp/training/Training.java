@@ -503,6 +503,7 @@ public class Training extends MVCPortlet {
 		
 		else {
 			isSubDiagnosisPresent = true;
+			subQuestionBoxObject.put("description", subDiagnosis);
 			int totalSymptomsNext = extractSymptoms(request, subQuestionBoxObject, "subSymptom_" + i + "_", "subDescr_" + i + "_");
 			
 			String yesCountNext = ParamUtil.getString(request, "symptomNr_" + i);		

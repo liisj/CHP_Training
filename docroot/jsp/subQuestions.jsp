@@ -27,6 +27,9 @@ String title = (String) request.getAttribute("title");
 <html>
 <head>
 <script type="text/javascript">
+
+var diagnosisTitle = "";
+
 $(document).ready(function() {
 	q_index = 0;
 	console.log("question_id: "+'<%=questionId%>');
@@ -65,12 +68,23 @@ function displayQuestions(data) {
 	var mainDiv = document.getElementById("subQuestionsBody");
 	
 	if (data.action == "treatment") {
+		
+		var surroundDiv = $("<div>");
+		surroundDiv
+			.addClass("treatmentArea")
+			.appendTo(mainDiv);
+		
+		var treatmentTitle = $("<div>");
+		treatmentTitle
+			.addClass("treatmentTitle")
+			.html();
+		
 		var treatmentText = data.treatment.description;
 		var subsection = $("<div>");
 		subsection
 			.addClass("treatmentText")
 			.html(treatmentText)
-			.appendTo(mainDiv);
+			.appendTo(surroundDiv);
 		return;
 	}
 	
@@ -86,6 +100,12 @@ function displayQuestions(data) {
 	accordionWrap
 		.addClass("accordionUI")
 		.appendTo(mainDiv);
+	
+	var askDiv = $("<div>");
+	askDiv
+		.addClass("ask")
+		.appendTo(accordionWrap)
+		.html("Does the patient exhibit any of the following symptoms?");
 	
 	var subsection = $("<div>");
 	subsection
