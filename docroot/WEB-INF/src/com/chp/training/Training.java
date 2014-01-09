@@ -480,7 +480,7 @@ public class Training extends MVCPortlet {
 			
 			String description = ParamUtil.getString(request, descrBase + i);
 			questionObject.put("question", question);
-			questionObject.put("description", description);
+			questionObject.put("details", description);
 			questions.add(questionObject);
 			i += 1;
 		}
