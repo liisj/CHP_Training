@@ -191,3 +191,8 @@ padding-left: 20px;
 .addDiagnosis {
 	margin-bottom: 100px;
 }
+
+.treatmentLbl {
+	align-self: center;
+	vertical-align: top;
+}

@@ -69,6 +69,7 @@ function addSymptomField(divId, type, currentDiag, symptomIndex) {
 	descrIn
 		.attr("type","text")
 		.attr("id", type + "Descr_" + index)
+		.attr("name", type + "Descr_" + index)
 		.addClass(type + "Descr")
 		.appendTo(form);
 	$("<p>").appendTo(form);
@@ -93,6 +94,21 @@ function addSubDiagnosis(divId) {
 	nameIn
 		.attr("type","text")
 		.attr("id", "diagnosis_" + diagnosisIndex)
+		.attr("name", "diagnosis_" + diagnosisIndex)
+		.appendTo(nameBox);
+	$("<p>").appendTo(nameBox);
+	var treatmentInLbl = $("<label>");
+	treatmentInLbl
+		.text("Treatment info: ")
+		.attr("for", "treatment_" + diagnosisIndex)
+		.addClass("treatmentLbl")
+		.appendTo(nameBox);
+	var treatmentIn = $("<textarea>");
+	treatmentIn
+		.attr("id", "treatment_" + diagnosisIndex)
+		.attr("name", "treatment_" + diagnosisIndex)
+		.attr("rows", 5)
+		.attr("cols", 50)
 		.appendTo(nameBox);
 	var symptomBox = $("<div>");
 	symptomBox
@@ -123,6 +139,7 @@ function addSubDiagnosis(divId) {
 	var nrIn = $("<input>");
 	nrIn
 		.attr("id","symptomNr_" + diagnosisIndex)
+		.attr("name","symptomNr_" + diagnosisIndex)
 		.attr("type", "text")
 		.appendTo(symptomBox);
 	diagnosisIndex += 1;
@@ -146,7 +163,7 @@ General diagnosis class: <input type="text" name="general">
 <span class="addSymptom" id="generalAddSympBtn" div="generalSymptoms" type="general">New symptom</span>
 <p/>
 <label for="generalNr">How many symptoms need to be present to give this diagnosis? </label>
-<input type="text" id="generalNr"/>
+<input type="text" id="generalNr" name="generalNr"/>
 </div>
 Sub-diagnoses<p/>
 <div id="subDiagnoses"></div>

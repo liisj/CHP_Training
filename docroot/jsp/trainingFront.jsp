@@ -54,6 +54,7 @@ $(document).ready(function() {
 	// Query the top level of categories
 	var request = jQuery.getJSON('<%=getTopCategories%>');
 	request.done(function(data1) {
+		console.log("data1: ");
 		console.log(data1);
 		var categoryDiv = document.getElementById("categoriesAccordion");
 		var keys = Object.keys(data1);
@@ -73,51 +74,58 @@ $(document).ready(function() {
 				.attr("id", "innerDiv1_" + i);
 			
 			// For each, query the second level of categories
-			var subRequest = $.getJSON('<%=getSubCategories%>', 
-					{"index" : i,
-					"path" : key});
+			var params = {"index" : i, "path" : key};
+			console.log("level 2 params");
+			console.log(params);
+			var subRequest = $.getJSON('<%=getSubCategories%>',params);
 			subRequest.done(function(data2) {
+				console.log("data2: ");
 				console.log(data2);
 				var innerDiv_super = document.getElementById("innerDiv1_" + data2.index);
-				for (var j in data2.objects) {
-					var cat2 = $("<h3>");
-					cat2
-						.appendTo(innerDiv_super)
-						.html(data2.objects[j].name)
-						.attr("cat_id",data2.objects[j].id)
-						.attr("id", "cat2_" + j)
-						.attr("j",j)
-						.addClass("subCatTitle");
-					var innerDiv2 = $("<div>");
-					innerDiv2
-						.appendTo(innerDiv_super)
-						.attr("id", "innerDiv2_" + data2.index + "_" + j);
-					
-					// For each, query the material titles that are in that category
-					var materialsRequest = $.getJSON('<%=getMaterialTitles%>', {"index" : j});
-					materialsRequest.done(function(data3) {
-						var innerDiv_super2 = 
-							document.getElementById("innerDiv2_" + data2.index + "_" + data3.index);
-						for (var k in data3.objects) {
-							var matForm = $("<form>");
-							matForm
-								.attr("method", "POST")
-								.attr("name", "matForm_" + k)
-								.attr("action", '<%=materialURL%>')
-								.appendTo(innerDiv_super2);
-							var mat = $("<button>");
-							mat
-								.text(data3.objects[k].title)
-								.attr("mat_id",data3.objects[k].id)
-								.attr("id", "mat_" + k)
-								.attr("k",k)
-								.attr("type","submit")
-								.addClass("matTitle")
-								.button()
-								.appendTo(matForm);
-							$("<p>").appendTo(innerDiv_super2);
-						}
-					});
+				var keys2 = Object.keys(data2);
+				for (var j in keys2) {
+					var key2 = keys2[j];
+					if (key2 != "index" && key2 != "material") {
+						console.log("key2: " + key2);
+						var cat2 = $("<h3>");
+						cat2
+							.appendTo(innerDiv_super)
+							.html(data2[key2])
+							.attr("cat_id",key2)
+							.attr("id", "cat2_" + j)
+							.attr("j",j)
+							.addClass("subCatTitle");
+						var innerDiv2 = $("<div>");
+						innerDiv2
+							.appendTo(innerDiv_super)
+							.attr("id", "innerDiv2_" + data2.index + "_" + j);
+						
+						// For each, query the material titles that are in that category
+						var materialsRequest = $.getJSON('<%=getMaterialTitles%>', {"index" : j});
+						materialsRequest.done(function(data3) {
+							var innerDiv_super2 = 
+								document.getElementById("innerDiv2_" + data2.index + "_" + data3.index);
+							for (var k in data3.objects) {
+								var matForm = $("<form>");
+								matForm
+									.attr("method", "POST")
+									.attr("name", "matForm_" + k)
+									.attr("action", '<%=materialURL%>')
+									.appendTo(innerDiv_super2);
+								var mat = $("<button>");
+								mat
+									.text(data3.objects[k].title)
+									.attr("mat_id",data3.objects[k].id)
+									.attr("id", "mat_" + k)
+									.attr("k",k)
+									.attr("type","submit")
+									.addClass("matTitle")
+									.button()
+									.appendTo(matForm);
+								$("<p>").appendTo(innerDiv_super2);
+							}
+						});
+					}
 				}
 				$("#innerDiv1_" + data2.index)
 					.accordion({

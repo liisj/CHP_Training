@@ -4,6 +4,9 @@
 <portlet:resourceURL id="getSubQuestions" var="getSubQuestions">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 </portlet:resourceURL>
+<portlet:resourceURL id="getFirstQuestionBox" var="getFirstQuestionBox">
+	<portlet:param name="ajaxAction" value="getData"></portlet:param>
+</portlet:resourceURL>
 <portlet:actionURL var="materialsURL">
 	<portlet:param name="jspPage" value="/jsp/materialsList.jsp"/>
 	<portlet:param name="actionName" value="materials"/>
@@ -27,11 +30,8 @@ String title = (String) request.getAttribute("title");
 $(document).ready(function() {
 	q_index = 0;
 	console.log("question_id: "+'<%=questionId%>');
-	var params = {
-			"topic" : '<%=questionId%>',
-			"yes_count" : 0
-			};
-	var request = jQuery.getJSON('<%=getSubQuestions%>', params);
+	var params = {"topic" : '<%=questionId%>'};
+	var request = jQuery.getJSON('<%=getFirstQuestionBox%>', params);
 	request.done(function(data) {
 		displayQuestions(data);
 	});
@@ -39,9 +39,20 @@ $(document).ready(function() {
 
 $(document).on("click",".nextBtn",function(){
 	q_index += 1;
+	
+	var yes_count = 0;
+	var answerBtns = document.getElementsByName("ans_" + $(this).attr("questionSet"));
+	for (var i in answerBtns) {
+		if (answerBtns[i].id == "ans_" + $(this).attr("questionSet") + "_1" && 
+				answerBtns[i].checked) {
+			yes_count += 1;
+		}
+	}
+	
+	console.log("yes_count: " + yes_count);
 	var params = {
-			"topic" : $(this).attr("question_id"),
-			"yes_count" : 0};
+			"questionbox" : $(this).attr("questionbox_id"),
+			"yes_count" : yes_count};
 	var request = $.getJSON('<%=getSubQuestions%>', params);
 	request.done(function(data) {
 		displayQuestions(data);
@@ -52,20 +63,23 @@ function displayQuestions(data) {
 	console.log(data);
 	
 	var mainDiv = document.getElementById("subQuestionsBody");
-	var titleSpan = $("<span>");
-	titleSpan
-		.html(data.title)
-		.addClass("title")
-		.appendTo(mainDiv);
 	
-	var treatmentText = data.treatment;
-	if (treatmentText != null) {
+	if (data.action == "treatment") {
+		var treatmentText = data.treatment.description;
 		var subsection = $("<div>");
 		subsection
 			.addClass("treatmentText")
 			.html(treatmentText)
 			.appendTo(mainDiv);
 		return;
+	}
+	
+	if (data.topic != null) {
+		var titleSpan = $("<span>");
+		titleSpan
+			.html(data.topic.title)
+			.addClass("title")
+			.appendTo(mainDiv);
 	}
 	
 	var accordionWrap = $("<div>");
@@ -78,12 +92,13 @@ function displayQuestions(data) {
 		.attr("id","questionSet_" + q_index)
 		.appendTo(accordionWrap);
 	
-	for (var i in data.questions) {
+	var questions = data.questionbox.questions;
+	for (var i in questions) {
 		
 		// Question
 		var qh = $("<h3>");
 		qh
-			.html(data.questions[i].question)
+			.html(questions[i].question)
 			.appendTo(subsection);
 		
 		// Description how to measure symptom
@@ -93,7 +108,7 @@ function displayQuestions(data) {
 			.appendTo(subsection);
 		var qAnsP = $("<p>");
 		qAnsP
-			.html(data.questions[i].description)
+			.html(questions[i].details.replace(new RegExp("[<>]", "g"),""))
 			.appendTo(qAnsDiv);
 		$("<p>").appendTo(qAnsP);
 		
@@ -101,28 +116,26 @@ function displayQuestions(data) {
 		var ans1 = $("<input>");
 		ans1
 			.attr("type","radio")
-			.attr("name","ans_" + i)
-			.attr("id","ans_" + i + "1")
-			.attr("question_id",data.questions[i].id)
+			.attr("name","ans_" + q_index)
+			.attr("id","ans_" + q_index + "_1")
 			.attr("questionSet",q_index)
 			.appendTo(qAnsP);
 		var ansLbl1 = $("<label>");
 		ansLbl1
-			.attr("for","ans_" + i + "1")
+			.attr("for","ans_" + q_index + "_1")
 			.text("Yes")
 			.appendTo(qAnsP);
 		$("<p>").appendTo(qAnsP);
 		var ans2 = $("<input>");
 		ans2
 			.attr("type","radio")
-			.attr("name","ans_" + i)
-			.attr("id","ans_" + i + "2")
-			.attr("question_id",data.questions[i].id)
+			.attr("name","ans_" + q_index)
+			.attr("id","ans_" + q_index + "_2")
 			.attr("questionSet",q_index)
 			.appendTo(qAnsP);
 		var ansLbl2 = $("<label>");
 		ansLbl2
-			.attr("for","ans_" + i + "2")
+			.attr("for","ans_" + q_index + "_2")
 			.text("No")
 			.appendTo(qAnsP);
 	}
@@ -131,7 +144,7 @@ function displayQuestions(data) {
 	var nextBtn = $("<button>");
 	nextBtn
 		.attr("questionSet",q_index)
-		.attr("topic", "x")
+		.attr("questionbox_id", data.questionbox.id)
 		.addClass("nextBtn")
 		.text("Next")
 		.appendTo(subsection)

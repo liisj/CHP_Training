@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
@@ -53,18 +54,20 @@ public class Training extends MVCPortlet {
 		
 		return result;
 	}
-	
+
 	private static void writeMessage(ResourceResponse response, JSONObject jsonObject) throws IOException {
 		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
 		httpResponse.setContentType("application/json;charset=UTF-8");
 		ServletResponseUtil.write(httpResponse, jsonObject.toJSONString());	
 	}
 
+
 	private static void writeMessage(ResourceResponse response, JSONArray jsonArray) throws IOException {
 		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
 		httpResponse.setContentType("application/json;charset=UTF-8");
 		ServletResponseUtil.write(httpResponse, jsonArray.toJSONString());
 	}
+
 
 	private static void writeMessage(ResourceResponse response, String string) throws IOException {
 		HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
@@ -129,20 +132,18 @@ public class Training extends MVCPortlet {
 		*/
 	}
 	
-	
+	@SuppressWarnings("unchecked")
 	public void getSubCategories(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
 		String index = request.getParameter("index");
 		JSONObject responseJSON = new JSONObject();
 		JSONObject params = requestToJSONObject(request);
-		System.out.println(params.toJSONString());
 		
 		try {
 			Connection con = DataBaseFunctions.getWebConnection();
 			responseJSON = DataBaseFunctions.getNextCategories(con, params);
 			responseJSON.put("index",index);
-			System.out.println(responseJSON.toJSONString());
 			writeMessage(response,responseJSON);
 		} catch (SQLException e) {	
 			JSONObject errorObject =  new JSONObject();
@@ -191,7 +192,7 @@ public class Training extends MVCPortlet {
 		*/
 	}
 	
-	
+	@SuppressWarnings("unchecked")
 	public void getMaterialTitles(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
@@ -221,7 +222,7 @@ public class Training extends MVCPortlet {
         ServletResponseUtil.write(httpResponse, responseJSON.toJSONString());
 	}
 	
-	
+	@SuppressWarnings("unchecked")
 	public void getMaterialContent(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
@@ -250,7 +251,7 @@ public class Training extends MVCPortlet {
         ServletResponseUtil.write(httpResponse, contentObj.toJSONString());
 	}
 	
-	
+	@SuppressWarnings("unchecked")
 	public void getTopQuestions(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
@@ -289,18 +290,16 @@ public class Training extends MVCPortlet {
 		}
 	}
 	
-	
-	public void getSubQuestions(ResourceRequest request, ResourceResponse response)
+	@SuppressWarnings("unchecked")
+	public void getFirstQuestionBox(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
-
+		
 		JSONObject responseJSON = new JSONObject();
-		JSONObject params = requestToJSONObject(request);
+		JSONObject parameters = requestToJSONObject(request);
 		
 		try {
 			Connection con = DataBaseFunctions.getWebConnection();
-			// TODO Peter has changed this function, needs to be updated
-			//responseJSON = DataBaseFunctions.getNextQuestionBox(con, requestToJSONObject(request));
-			
+			responseJSON = DataBaseFunctions.getFirstQuestionBox(con, parameters);
 			writeMessage(response,responseJSON);
 		} catch (SQLException e) {	
 			JSONObject errorObject =  new JSONObject();
@@ -308,6 +307,30 @@ public class Training extends MVCPortlet {
 			errorObject.put("details", e.getMessage());
 			writeMessage(response,errorObject);
 			return;
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+
+	
+	@SuppressWarnings("unchecked")
+	public void getSubQuestions(ResourceRequest request, ResourceResponse response)
+			throws PortletException, IOException {
+
+		JSONObject responseJSON = new JSONObject();
+		
+		try {
+			Connection con = DataBaseFunctions.getWebConnection();
+			responseJSON = DataBaseFunctions.getNextAction(con, requestToJSONObject(request));
+			writeMessage(response,responseJSON);
+		} catch (SQLException e) {	
+			JSONObject errorObject =  new JSONObject();
+			errorObject.put("error", "Database");
+			errorObject.put("details", e.getMessage());
+			writeMessage(response,errorObject);
+			return;
+		} catch (ParseException e) {
+			e.printStackTrace();
 		}
 
 		/*
@@ -360,6 +383,7 @@ public class Training extends MVCPortlet {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	public void getTreatment(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
@@ -374,17 +398,34 @@ public class Training extends MVCPortlet {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	public void sendForm(ActionRequest request, ActionResponse response)
 			throws PortletException, IOException {
 		
-		String generalName = ParamUtil.getString(request, "general");
-		String generalSym = ParamUtil.getString(request, "generalSymptom_1");
-		String cat = ParamUtil.getString(request, "topCategories");
-		
 		JSONObject params = requestToJSONObject(request);
-		System.out.println(params.toJSONString());
+		System.out.println("original params: " + params.toJSONString());
 		
-		// Getting a file
+		JSONObject realParams = new JSONObject();
+		
+		// Add information about general diagnosis
+		JSONObject topicObject = new JSONObject();
+		topicObject.put("title", ParamUtil.getString(request, "general"));
+		
+		// Add symptoms to general diagnosis
+		JSONObject questionBoxObject = new JSONObject();
+		int totalSymptoms = extractSymptoms(request, questionBoxObject, "generalSymptom_", "generalDescr_");
+		realParams.put("questionbox", questionBoxObject);
+		realParams.put("topic", topicObject);
+		
+		String yesCount = ParamUtil.getString(request, "generalNr");
+		
+		// Add sub-diagnoses
+		extractDiagnoses(1, request, realParams, yesCount, "sub", totalSymptoms);
+		
+		System.out.println("realParams: " + realParams.toJSONString());
+		
+		// Getting a file and saving it to the "uploads" folder
+		
 		String folder = getInitParameter("uploadFolder");
 		String realPath = getPortletContext().getRealPath("/");
 		UploadPortletRequest upr = PortalUtil.getUploadPortletRequest(request);
@@ -400,27 +441,124 @@ public class Training extends MVCPortlet {
 			FileOutputStream fos = new FileOutputStream(newFile);
 			
 			byte[] bytes_ = FileUtil.getBytes(in);
-			int i = fis.read(bytes_);
+			int j = fis.read(bytes_);
 			
-			while (i != -1) {
-				fos.write(bytes_, 0, i);
-				i = fis.read(bytes_);
+			while (j != -1) {
+				fos.write(bytes_, 0, j);
+				j = fis.read(bytes_);
 			}
 			fis.close();
 			fos.close();
-			
-			System.out.println("sendForm...." + generalName + " " + generalSym + " " + cat + " "
-					+ filename);
 		}
 	}
+
+	// Extract symptoms for a questionbox
+	@SuppressWarnings("unchecked")
+	private int extractSymptoms(ActionRequest request, JSONObject questionBoxObject,
+								String symptomBase, String descrBase) {
 		
+		JSONArray questions = new JSONArray();
+		
+		int i = 1;
+		while (true) {
+			JSONObject questionObject = new JSONObject();
+			String question = ParamUtil.getString(request, symptomBase + i);
+			if (question.equals("")) {
+				break;
+			}
+			
+			String description = ParamUtil.getString(request, descrBase + i);
+			questionObject.put("question", question);
+			questionObject.put("description", description);
+			questions.add(questionObject);
+			i += 1;
+		}
+		
+		questionBoxObject.put("questions", questions);
+		return i-1;
+	}
+		
+	@SuppressWarnings("unchecked")
+	private void extractDiagnoses(int i, ActionRequest request, JSONObject superObject, 
+			String yesCount, String type, int totalSymptoms) {
+
+		JSONObject subQuestionBoxObject = new JSONObject();
+		boolean isSubDiagnosisPresent;
+		String subDiagnosis = ParamUtil.getString(request, "diagnosis_" + Integer.toString(i));
+		
+		if (subDiagnosis.equals("")) {
+			isSubDiagnosisPresent = false;
+		}
+		
+		else {
+			isSubDiagnosisPresent = true;
+			int totalSymptomsNext = extractSymptoms(request, subQuestionBoxObject, "subSymptom_" + i + "_", "subDescr_" + i + "_");
+			
+			String yesCountNext = ParamUtil.getString(request, "symptomNr_" + i);		
+			int k = i + 1;
+			extractDiagnoses(k, request, subQuestionBoxObject, yesCountNext, "next", totalSymptomsNext);
+		}
+		
+		StringBuilder nextKeyLower = new StringBuilder();
+		for (int j = 0; j < Integer.parseInt(yesCount); j++) {
+			nextKeyLower.append(j + ",");
+		}
+		
+		StringBuilder nextKeyHigher = new StringBuilder();
+		for (int j = Integer.parseInt(yesCount); j <= totalSymptoms; j++) {
+			nextKeyHigher.append(j + ",");
+		}
+		
+		// If we continue on the same diagnosis level, then not achieving yes_count of symptoms
+		// will lead to the next question box on the same level.
+		// Achieving yes_count will present the treatment.
+		if (type.equals("next")) {
+			System.out.println("Type is next");
+			JSONObject nextObjectNeg = new JSONObject();
+			// possible actions: next_box, treatment, next_topic, change_topic
+			if(!isSubDiagnosisPresent) {
+				nextObjectNeg.put("action", "next_topic");
+			}
+			else {
+				nextObjectNeg.put("action", "next_box");
+				nextObjectNeg.put("questionbox", subQuestionBoxObject);
+			}
+			
+			superObject.put(nextKeyLower, nextObjectNeg);	
+			
+			JSONObject nextObjectPos = new JSONObject();
+			JSONObject treatmentObject = new JSONObject();
+			nextObjectPos.put("action", "treatment");
+			treatmentObject.put("description", ParamUtil.getString(request, "treatment_" + (i-1)));
+			nextObjectPos.put("treatment", treatmentObject);
+			superObject.put(nextKeyHigher, nextObjectPos);
+		}
+		
+		// If we go on a more detailed diagnosis level, then not achieving yes_count
+		// will lead to the next topic, and achieving yes_count will go to the first
+		// more detailed questionbox. 
+		// At some point this and the previous should be joined to make a general system of
+		// staying on the same level or going one level lower, so that more than 2 levels of
+		// detail would be supported.
+		if (type.equals("sub")) {
+			JSONObject nextObjectNeg = new JSONObject();
+			// possible actions: next_box, treatment, next_topic, change_topic
+			nextObjectNeg.put("action", "next_topic");
+			superObject.put(nextKeyLower, nextObjectNeg);
+			
+			JSONObject nextObjectPos = new JSONObject();
+			// possible actions: next_box, treatment, next_topic, change_topic
+			nextObjectPos.put("action", "next_box");
+			nextObjectPos.put("questionbox", subQuestionBoxObject);
+			superObject.put(nextKeyHigher, nextObjectPos);
+		}
+	}
+	
 	// Very necessary function, please don't delete anything in here
 	@Override
     public void processAction(
             ActionRequest actionRequest, ActionResponse actionResponse)
         throws IOException, PortletException {
-		
-		System.out.println("processAction reached");
 		
         PortletPreferences prefs = actionRequest.getPreferences();
         String actionName = actionRequest.getParameter("actionName");
@@ -437,17 +575,13 @@ public class Training extends MVCPortlet {
                 }
         	}
         	else if (actionName.equals("materials")) {
-        		System.out.println("materials");
         		String catId2 = actionRequest.getParameter("id");
                 if (catId2 != null) {
                     actionRequest.setAttribute("mat_id", catId2);
                 }
         	}
         	else if (actionName.equals("goToMaterial")) {
-        		Map<String,String[]> params = actionRequest.getParameterMap();
-        		for (String key : params.keySet()) {
-        			System.out.println(key + ": " + params.get(key));
-        		}
+        		// TODO What should be here?
         	}
         	else if (actionName.equals("subQuestions")) {
         		String questionId = actionRequest.getParameter("question_id");
@@ -470,9 +604,7 @@ public class Training extends MVCPortlet {
         }
         
         String jspPage = actionRequest.getParameter("jspPage");
-        System.out.println("jspPage: " + jspPage);
         if (jspPage != null) {
-        	System.out.println(jspPage);
         	actionResponse.setRenderParameter("jspPage", jspPage);
         }
         if (switchJSP) {
@@ -504,6 +636,10 @@ public class Training extends MVCPortlet {
 		 
 		 if ("getTopQuestions".equals(resourceID)) {
 			 getTopQuestions(request, response);
+		 }
+		 
+		 if ("getFirstQuestionBox".equals(resourceID)) {
+			 getFirstQuestionBox(request, response);
 		 }
 		 
 		 if ("getSubQuestions".equals(resourceID)) {
