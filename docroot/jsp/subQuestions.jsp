@@ -67,7 +67,11 @@ function displayQuestions(data) {
 	
 	var mainDiv = document.getElementById("subQuestionsBody");
 	
-	if (data.action == "treatment") {
+	if (data.action == "next_box"){
+		diagnosisTitle = data.questionbox.description;
+	}
+	
+	else if (data.action == "treatment") {
 		
 		var surroundDiv = $("<div>");
 		surroundDiv
@@ -77,7 +81,8 @@ function displayQuestions(data) {
 		var treatmentTitle = $("<div>");
 		treatmentTitle
 			.addClass("treatmentTitle")
-			.html();
+			.html("Diagnosis: " + diagnosisTitle)
+			.appendTo(surroundDiv);
 		
 		var treatmentText = data.treatment.description;
 		var subsection = $("<div>");
@@ -86,6 +91,10 @@ function displayQuestions(data) {
 			.html(treatmentText)
 			.appendTo(surroundDiv);
 		return;
+	}
+	
+	else {
+		diagnosisTitle = data.topic.title;
 	}
 	
 	if (data.topic != null) {
@@ -105,7 +114,7 @@ function displayQuestions(data) {
 	askDiv
 		.addClass("ask")
 		.appendTo(accordionWrap)
-		.html("Does the patient exhibit any of the following symptoms?");
+		.html("Does the patient exhibit any symptoms of " + diagnosisTitle + "?");
 	
 	var subsection = $("<div>");
 	subsection
