@@ -206,6 +206,74 @@ public class DataBaseFunctions {
 		}
 		return resultArray;
 	}
+	
+	
+	private static int insertQuestionBox(Connection con,JSONObject questionBox) throws SQLException {
+
+		JSONArray jsonQuestions = (JSONArray) questionBox
+				.remove("questions");
+		System.out.println("Questions: " + jsonQuestions.toString());
+		Object descriptionO = questionBox.remove("description");
+//		if (descriptionO==null) {
+//			throw new IllegalArgumentException(String.format(
+//					"description (of the questionBox) was not provided as parameter.\n"
+//							+ "Function: insertNewQuestionPath()\n" + "Parameters: %s",
+//					Helper.niceJsonPrint(parameters, "")));
+//		}
+		String description = descriptionO==null?"":descriptionO.toString();
+		int questionNum = jsonQuestions.size();
+		String[] questionStrings = new String[questionNum];
+		int count = 0;
+		for (Object questionObject : jsonQuestions) {
+			JSONObject jsonQuestion = (JSONObject) questionObject;
+			String question = jsonQuestion.get("question").toString();
+			Object questionDetO = jsonQuestion.get("details");
+			String questionDet = questionDetO==null?"":questionDetO.toString();
+			String questionString = "(" + question + "," + questionDet + ")";
+			questionStrings[count++] = questionString;
+			System.out.println("one question String: " + questionString);
+		}
+		try {
+			Array questionArray = con.createArrayOf("question",
+					questionStrings);
+			insertQuestionBoxStatement.setString(1, description);
+			insertQuestionBoxStatement.setArray(2, questionArray);
+
+		} catch (SQLException e) {
+			throw new SQLException(String.format(
+					"Adding parameters to the statement failed\n"
+							+ "Statement: %s\n"
+							+ "Function: insertNewQuestionPath()\n"
+							+ "QuestionBox JSON: %s\n" + "Details: %s",
+					insertQuestionBoxStatement.toString(),
+					Helper.niceJsonPrint(questionBox, ""), e.getMessage()));
+		}
+		ResultSet rs;
+		try {
+			rs = insertQuestionBoxStatement.executeQuery();
+			if (!rs.next())
+				throw new SQLException(String.format(
+						"Statement did not return expected Result.\n"
+								+ "Function: insertNewQuestionPath()\n"
+								+ "Statement: %s\n" + "QuestionBox JSON: %s\n",
+						insertTopicStatement.toString(),
+						Helper.niceJsonPrint(questionBox, "")));
+		} catch (SQLException e) {
+			throw new SQLException(String.format(
+					"Execution of Statement failed.\n"
+							+ "Function: insertNewQuestionPath()\n"
+							+ "Statement: %s\n" + "QuestionBox JSON: %s\n"
+							+ "Details: %s",
+					insertQuestionBoxStatement.toString(),
+					Helper.niceJsonPrint(questionBox, ""), e.getMessage()));
+		}
+
+		int questionBoxID = rs.getInt(1);
+		
+		return questionBoxID;
+	}
+	
+	
 
 	/**
 	 * 
@@ -243,120 +311,21 @@ public class DataBaseFunctions {
 		JSONObject first = (JSONObject) parameters.clone();
 		ArrayDeque<JSONObject> jobQueue = new ArrayDeque<JSONObject>();
 		
-		//Prepare Statement to insert topic
-		
-		try {
-
-			JSONObject topic = (JSONObject) first.get("topic");
-			String topic_title = topic.get("title").toString();
-			Object topic_descriptionOb = topic.get("description");
-			String topic_description = topic_descriptionOb == null ? ""
-					: topic_descriptionOb.toString();
-			insertTopicStatement.setString(1, topic_title);
-			insertTopicStatement.setString(2, topic_description);
-		} catch (SQLException e) {
-			throw new SQLException(String.format(
-					"Adding parameters to the statement failed\n"
-							+ "Function: insertNewQuestionPath()\n"
-							+ "Statement: %s\n" + "Parameters: %s\n"
-							+ "Details: %s", insertTopicStatement.toString(),
-					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
-		}
-		ResultSet topicResult;
-		
-		// Execute Statement to prepare topic
-		
-		try {
-			topicResult = insertTopicStatement.executeQuery();
-		} catch (SQLException e) {
-			throw new SQLException(String.format(
-					"Execution of Statement failed.\n"
-							+ "Function: insertNewQuestionPath()\n"
-							+ "Statement: %s\n" + "Parameters: %s\n"
-							+ "Details: %s", insertTopicStatement.toString(),
-					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
-		}
-		if (!topicResult.next()) {
-			throw new SQLException(String.format(
-					"Statement did not return expected Result.\n"
-							+ "Function: insertNewQuestionPath()\n"
-							+ "Statement: %s\n" + "Parameters: %s\n",
-					insertTopicStatement.toString(),
-					Helper.niceJsonPrint(parameters, "")));
-		}
-		int topic = topicResult.getInt(1);
 		
 		// Put first QuestionBox job Queue
 		
 		JSONObject firstBox = (JSONObject) first.get("questionbox");
 		jobQueue.add(firstBox);
-		
+
+		int topic = -1;
 		
 		while (!jobQueue.isEmpty()) {
 			JSONObject questionBoxJob = jobQueue.pop();
 			System.out.println("Found Box");
 			
+			int questionBoxID = insertQuestionBox(con, questionBoxJob);
 
-			JSONArray jsonQuestions = (JSONArray) questionBoxJob
-					.remove("questions");
-			System.out.println("Questions: " + jsonQuestions.toString());
-			Object descriptionO = questionBoxJob.remove("description");
-//			if (descriptionO==null) {
-//				throw new IllegalArgumentException(String.format(
-//						"description (of the questionBox) was not provided as parameter.\n"
-//								+ "Function: insertNewQuestionPath()\n" + "Parameters: %s",
-//						Helper.niceJsonPrint(parameters, "")));
-//			}
-			String description = descriptionO==null?"":descriptionO.toString();
-			int questionNum = jsonQuestions.size();
-			String[] questionStrings = new String[questionNum];
-			int count = 0;
-			for (Object questionObject : jsonQuestions) {
-				JSONObject jsonQuestion = (JSONObject) questionObject;
-				String question = jsonQuestion.get("question").toString();
-				Object questionDetO = jsonQuestion.get("details");
-				String questionDet = questionDetO==null?"":questionDetO.toString();
-				String questionString = "(" + question + "," + questionDet + ")";
-				questionStrings[count++] = questionString;
-				System.out.println("one question String: " + questionString);
-			}
-			try {
-				Array questionArray = con.createArrayOf("question",
-						questionStrings);
-				insertQuestionBoxStatement.setString(1, description);
-				insertQuestionBoxStatement.setArray(2, questionArray);
-
-			} catch (SQLException e) {
-				throw new SQLException(String.format(
-						"Adding parameters to the statement failed\n"
-								+ "Statement: %s\n"
-								+ "Function: insertNewQuestionPath()\n"
-								+ "Parameters: %s\n" + "Details: %s",
-						insertQuestionBoxStatement.toString(),
-						Helper.niceJsonPrint(parameters, ""), e.getMessage()));
-			}
-			ResultSet rs;
-			try {
-				rs = insertQuestionBoxStatement.executeQuery();
-				if (!rs.next())
-					throw new SQLException(String.format(
-							"Statement did not return expected Result.\n"
-									+ "Function: insertNewQuestionPath()\n"
-									+ "Statement: %s\n" + "Parameters: %s\n",
-							insertTopicStatement.toString(),
-							Helper.niceJsonPrint(parameters, "")));
-			} catch (SQLException e) {
-				throw new SQLException(String.format(
-						"Execution of Statement failed.\n"
-								+ "Function: insertNewQuestionPath()\n"
-								+ "Statement: %s\n" + "Parameters: %s\n"
-								+ "Details: %s",
-						insertQuestionBoxStatement.toString(),
-						Helper.niceJsonPrint(parameters, ""), e.getMessage()));
-			}
-
-			int questionBoxID = rs.getInt(1);
-
+			
 			if (!firstB) {
 				JSONObject source = (JSONObject) questionBoxJob.get("source");
 				String source_yes_list = source.get("source_yes_list")
@@ -374,8 +343,53 @@ public class DataBaseFunctions {
 					insertActionStatement.addBatch();
 				}
 				insertActionStatement.executeBatch();
-			} else
+			} else {
+
+				//Prepare Statement to insert topic
+				
+				try {
+
+					JSONObject topicObject = (JSONObject) first.get("topic");
+					String topic_title = topicObject.get("title").toString();
+					Object topic_descriptionOb = topicObject.get("description");
+					String topic_description = topic_descriptionOb == null ? ""
+							: topic_descriptionOb.toString();
+					insertTopicStatement.setString(1, topic_title);
+					insertTopicStatement.setString(2, topic_description);
+					insertTopicStatement.setInt(3, questionBoxID);
+				} catch (SQLException e) {
+					throw new SQLException(String.format(
+							"Adding parameters to the statement failed\n"
+									+ "Function: insertNewQuestionPath()\n"
+									+ "Statement: %s\n" + "Parameters: %s\n"
+									+ "Details: %s", insertTopicStatement.toString(),
+							Helper.niceJsonPrint(parameters, ""), e.getMessage()));
+				}
+				ResultSet topicResult;
+				
+				// Execute Statement to prepare topic
+				
+				try {
+					topicResult = insertTopicStatement.executeQuery();
+				} catch (SQLException e) {
+					throw new SQLException(String.format(
+							"Execution of Statement failed.\n"
+									+ "Function: insertNewQuestionPath()\n"
+									+ "Statement: %s\n" + "Parameters: %s\n"
+									+ "Details: %s", insertTopicStatement.toString(),
+							Helper.niceJsonPrint(parameters, ""), e.getMessage()));
+				}
+				if (!topicResult.next()) {
+					throw new SQLException(String.format(
+							"Statement did not return expected Result.\n"
+									+ "Function: insertNewQuestionPath()\n"
+									+ "Statement: %s\n" + "Parameters: %s\n",
+							insertTopicStatement.toString(),
+							Helper.niceJsonPrint(parameters, "")));
+				}
+				topic = topicResult.getInt(1);
 				firstB = false;
+			}
 
 			System.out.println("ID of box: " + questionBoxID);
 
@@ -661,7 +675,6 @@ public class DataBaseFunctions {
 								"{ \"title\": \"gd_b\" }, " +
 						"\"questionbox\": { " +
 										"\"questions\": [{ \"details\": \"d1\", \"question\": \"s1\" }] " +
-										"\"description\":\"Blubb\"" +
 										"}, " +
 						"\"1,\": { " +
 								"\"questionbox\": { " +

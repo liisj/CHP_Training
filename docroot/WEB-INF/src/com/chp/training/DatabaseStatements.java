@@ -7,8 +7,8 @@ class DatabaseStatements {
 			"RETURNING id";
 
 	static final String INSERT_TOPIC = "INSERT INTO topics " +
-			"(id,title,description) " +
-			"VALUES (default,?,?) " +
+			"(id,title,description,first_box) " +
+			"VALUES (default,?,?,?) " +
 			"RETURNING id";
 
 	static final String INSERT_TREATMENT = "INSERT INTO treatments " +
