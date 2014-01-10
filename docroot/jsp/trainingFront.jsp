@@ -147,11 +147,15 @@ $(document).ready(function() {
 	request2.done(function(data) {
 		console.log(data);
 		var questionsDiv = document.getElementById("questions");
+		var linkDiv = $("<div>");
+		linkDiv
+			.attr("id", "questionLinkDiv")
+			.appendTo(questionsDiv);
 		for (var i in data) {
 			var questionsSpan = $("<span>");
 			questionsSpan
 				.addClass("questionsSpan")
-				.appendTo(questionsDiv);
+				.appendTo(linkDiv);
 			var questionForm = $("<form>");
 			questionForm
 				.addClass("questionForm")
