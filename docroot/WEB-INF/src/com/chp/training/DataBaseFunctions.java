@@ -55,7 +55,7 @@ public class DataBaseFunctions {
 			pgSimpleDataSourceWeb.setPassword(PASSWORD);
 
 		}
-		if (connection == null) {
+		if (connection == null || connection.isClosed()) {
 			try {
 				connection = pgSimpleDataSourceWeb.getConnection();
 				connection.setAutoCommit(true);
