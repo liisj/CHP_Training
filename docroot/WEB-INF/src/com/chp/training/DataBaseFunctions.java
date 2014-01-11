@@ -340,11 +340,11 @@ public class DataBaseFunctions {
 						.toString());
 
 				for (String source_yes_String : source_yes_Strings) {
-					insertActionStatement.setInt(1, questionBoxID);
+					insertActionStatement.setInt(1, source_id);
 					insertActionStatement.setInt(2,
 							Integer.valueOf(source_yes_String));
 					insertActionStatement.setString(3, "next_box");
-					insertActionStatement.setInt(4, source_id);
+					insertActionStatement.setInt(4, questionBoxID);
 					insertActionStatement.addBatch();
 				}
 				insertActionStatement.executeBatch();
@@ -727,7 +727,7 @@ public class DataBaseFunctions {
 			 System.out.println();
 			
 			 parameters = new JSONObject();
-			 parameters.put("questionbox", 1);
+			 parameters.put("questionbox", 25);
 			 parameters.put("yes_count", 0);
 			 result = getNextAction(con, parameters);
 			 System.out.println("Questions answered with yes: 0");
@@ -736,7 +736,7 @@ public class DataBaseFunctions {
 			 System.out.println();
 			
 			 parameters = new JSONObject();
-			 parameters.put("questionbox", 1);
+			 parameters.put("questionbox", 25);
 			 parameters.put("yes_count", 1);
 			 result = getNextAction(con, parameters);
 			 System.out.println("Questions answered with yes: 1");
