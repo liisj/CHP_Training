@@ -314,16 +314,21 @@ public class DataBaseFunctions {
 		
 		// Put first QuestionBox job Queue
 		
-		JSONObject firstBox = (JSONObject) first.get("questionbox");
-		jobQueue.add(firstBox);
+		jobQueue.add(first);
 
 		int topic = -1;
 		
 		while (!jobQueue.isEmpty()) {
 			JSONObject questionBoxJob = jobQueue.pop();
+			Set<Object> testkeys = questionBoxJob.keySet();
+			System.out.println("Keys of job:");
+			for (Object key : testkeys)
+				System.out.println(key.toString()+" : "+questionBoxJob.get(key).toString());
+			System.out.println();
+			JSONObject questionBoxObject = (JSONObject) questionBoxJob.remove("questionbox");
 			System.out.println("Found Box");
 			
-			int questionBoxID = insertQuestionBox(con, questionBoxJob);
+			int questionBoxID = insertQuestionBox(con, questionBoxObject);
 
 			
 			if (!firstB) {
@@ -349,9 +354,9 @@ public class DataBaseFunctions {
 				
 				try {
 
-					JSONObject topicObject = (JSONObject) first.get("topic");
+					JSONObject topicObject = (JSONObject) questionBoxJob.remove("topic");
 					String topic_title = topicObject.get("title").toString();
-					Object topic_descriptionOb = topicObject.get("description");
+					Object topic_descriptionOb = topicObject.remove("description");
 					String topic_description = topic_descriptionOb == null ? ""
 							: topic_descriptionOb.toString();
 					insertTopicStatement.setString(1, topic_title);
@@ -392,6 +397,7 @@ public class DataBaseFunctions {
 			}
 
 			System.out.println("ID of box: " + questionBoxID);
+			System.out.println(Helper.niceJsonPrint(questionBoxJob, ""));
 
 			Set<Object> keySet = questionBoxJob.keySet();
 
@@ -399,9 +405,10 @@ public class DataBaseFunctions {
 
 				String keyString = keyObject.toString();
 				System.out.println("Next key: " + keyString);
-
-				if (!keyString.matches("[0-9]+(,[0-9]+)*"))
+				System.out.println("there is a test of \"" + keyString + "\"");
+				if (!keyString.matches("(,*[0-9]*,*)*"))
 					continue;
+				System.out.println("got here");
 
 				JSONObject valueObject = (JSONObject) questionBoxJob
 						.get(keyObject);
@@ -415,14 +422,14 @@ public class DataBaseFunctions {
 					source_obj.put("source_id", questionBoxID);
 					source_obj.put("source_yes_list", keyString);
 
-					JSONObject next_job = (JSONObject) valueObject
-							.get("questionbox");
+					JSONObject next_job = (JSONObject) valueObject;
 					next_job.put("source", source_obj);
 					jobQueue.add(next_job);
 					continue;
 				}
 
 				for (String key : keys) {
+					System.out.println("Trying to insert action: " + action);
 					if ("change_topic".equals(action)) {
 
 					} else if ("next_topic".equals(action)) {
@@ -574,6 +581,8 @@ public class DataBaseFunctions {
 		Integer questionBox = Integer.valueOf(questionboxS);
 		String yesCountS = parameters.get("yes_count").toString();
 		Integer yesCount = Integer.valueOf(yesCountS);
+		
+		System.out.println(yesCount + " questions haven been answered with yes.");
 
 		PreparedStatement pstmt = null;
 		try {
@@ -581,7 +590,8 @@ public class DataBaseFunctions {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
+		System.out.println("1");
 		try {
 			pstmt.setInt(1, questionBox);
 			pstmt.setInt(2, yesCount);
@@ -595,17 +605,21 @@ public class DataBaseFunctions {
 					e.getMessage()));
 		}
 
+		System.out.println("2");
 		ResultSet rs;
 		try {
 			rs = pstmt.executeQuery();
 		} catch (SQLException e) {
-			throw new SQLException(String.format(
+			String error = String.format(
 					"Execution of Statement failed.\n"
 							+ "Function: getNextQuestionBox()\n"
 							+ "Statement: %s\n" + "Parameters: %s\n"
 							+ "Details: %s", pstmt.toString(),
-					Helper.niceJsonPrint(parameters, ""), e.getMessage()));
+					Helper.niceJsonPrint(parameters, ""), e.getMessage());
+			System.out.println("Error message: " +error);
+			throw new SQLException(error);
 		}
+		System.out.println("3");
 		if (!rs.next()) {
 			return null;
 		}

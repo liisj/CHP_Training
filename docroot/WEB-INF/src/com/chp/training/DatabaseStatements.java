@@ -20,7 +20,7 @@ class DatabaseStatements {
 			"(id,path,treatment,topic) " +
 			"VALUES (default,(?)::ltree,?,?)";
 	
-	static final String INSERT_ACTION = "INSERT INTO actions (questionbox,yes_count,\"action\",\"reference\")";
+	static final String INSERT_ACTION = "INSERT INTO actions (questionbox,yes_count,\"action\",\"reference\") VALUES (?,?,?,?)";
 
 	static final String IS_PATH_END= "SELECT t.description " +
 			"FROM paths p,treatments t " +
