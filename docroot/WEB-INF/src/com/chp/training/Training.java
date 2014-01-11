@@ -504,11 +504,6 @@ public class Training extends MVCPortlet {
 		else {
 			isSubDiagnosisPresent = true;
 			subQuestionBoxObject.put("description", subDiagnosis);
-			int totalSymptomsNext = extractSymptoms(request, subQuestionBoxObject, "subSymptom_" + i + "_", "subDescr_" + i + "_");
-			
-			String yesCountNext = ParamUtil.getString(request, "symptomNr_" + i);		
-			int k = i + 1;
-			extractDiagnoses(k, request, subQuestionBoxObject, yesCountNext, "next", totalSymptomsNext);
 		}
 		
 		StringBuilder nextKeyLower = new StringBuilder();
@@ -532,6 +527,11 @@ public class Training extends MVCPortlet {
 				nextObjectNeg.put("action", "next_topic");
 			}
 			else {
+				
+				int totalSymptomsNext = extractSymptoms(request, subQuestionBoxObject, "subSymptom_" + i + "_", "subDescr_" + i + "_");
+				String yesCountNext = ParamUtil.getString(request, "symptomNr_" + i);
+				extractDiagnoses(i+1, request, nextObjectNeg, yesCountNext, "next", totalSymptomsNext);
+				
 				nextObjectNeg.put("action", "next_box");
 				nextObjectNeg.put("questionbox", subQuestionBoxObject);
 			}
@@ -559,6 +559,11 @@ public class Training extends MVCPortlet {
 			superObject.put(nextKeyLower, nextObjectNeg);
 			
 			JSONObject nextObjectPos = new JSONObject();
+			
+			int totalSymptomsNext = extractSymptoms(request, subQuestionBoxObject, "subSymptom_" + i + "_", "subDescr_" + i + "_");
+			String yesCountNext = ParamUtil.getString(request, "symptomNr_" + i);
+			extractDiagnoses(i+1, request, nextObjectPos, yesCountNext, "next", totalSymptomsNext);
+			
 			// possible actions: next_box, treatment, next_topic, change_topic
 			nextObjectPos.put("action", "next_box");
 			nextObjectPos.put("questionbox", subQuestionBoxObject);

@@ -93,6 +93,8 @@ p {padding: 5px 0;}
 	min-height: 1000px;
 	color: #eb8f00;
 	font-family: Verdana;
+	overflow: hidden;
+	padding-bottom: 40px;
 }
 
 
