@@ -1,6 +1,5 @@
 package com.chp.training;
 
-
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,6 +10,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.eclipse.jdt.internal.compiler.problem.ProblemReporter;
+import org.hsqldb.types.Types;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -98,74 +98,161 @@ public class DataBaseFunctions {
 
 	}
 
-	public static JSONObject getNextCategories(Connection con,
-			JSONObject parameters) {
-		String path = parameters.get("path").toString();
-		PreparedStatement isEndStatement = null;
+
+	public static JSONObject addCategory(Connection con, JSONObject parameters) {
+		String category = parameters.get("category").toString();
+		Integer parent = Integer.valueOf(parameters.get("parent").toString());
+		String material_title = parameters.get("material_title").toString();
+		String material_text = parameters.get("material_text").toString();
+		String material_pic = parameters.get("material_pic").toString();
+		Boolean insert_pic = Boolean.valueOf(material_pic);
+		
+		PreparedStatement addCat = null;
 		try {
-			isEndStatement = con
-					.prepareStatement("SELECT material FROM materials m WHERE (?)::ltree <@ m.category_path");
+			addCat = con.prepareStatement("INSERT INTO " +
+					"categories (id,title,parent_category,material_title,material_text,material_pic) " +
+					"VALUES (default,?,?,?,?,CASE WHEN ? THEN (SELECT MAX(material_pic)+1 FROM categories) ELSE NULL END) RETURNING id,material_pic");
 		} catch (SQLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		try {
-			isEndStatement.setString(1, path);
+			int p = 0;
+			addCat.setString(p++, category);
+			addCat.setInt(p++, parent);
+			addCat.setString(p++, material_title);
+			addCat.setString(p++, material_text);
+			addCat.setBoolean(p++, insert_pic);
 		} catch (SQLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		ResultSet rsEnd;
-		JSONObject resultObject = new JSONObject();
+		
+		ResultSet rs;
+		
 		try {
-			rsEnd = isEndStatement.executeQuery();
-			if (rsEnd.next()) {
-				String material = rsEnd.getString(1);
-				resultObject.put("material", material);
-				return resultObject;
+			JSONObject result = new JSONObject();
+			rs = addCat.executeQuery();
+			while (rs.next()) {
+				int id = rs.getInt(1);
+				int pic = rs.getInt(2);
+				result.put("id", id);
+				result.put("pic", pic);
+				result.put("category:", category);
+			}
+			return result;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		return null;
+	}
+
+	public static JSONObject addMaterial(Connection con, JSONObject parameters) {
+		String category = parameters.get("category").toString();
+		String material_title = parameters.get("material_title").toString();
+		String material_text = parameters.get("material_text").toString();
+		String material_pic = parameters.get("material_pic").toString();
+		Boolean insert_pic = Boolean.valueOf(material_pic);
+		
+		PreparedStatement addCat = null;
+		try {
+			addCat = con.prepareStatement("UPDATE categories SET material_title = ?, " +
+					"material_text = ?, material_pic = CASE WHEN ? THEN (SELECT MAX(material_pic)+1 FROM categories) ELSE material_pic END WHERE id = ? RETURNING id,material_pic");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			int p = 0;
+			addCat.setString(p++, material_title);
+			addCat.setString(p++, material_text);
+			addCat.setBoolean(p++, insert_pic);
+			addCat.setString(p++, category);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		ResultSet rs;
+		
+		try {
+			JSONObject result = new JSONObject();
+			rs = addCat.executeQuery();
+			while (rs.next()) {
+				int id = rs.getInt(1);
+				int pic = rs.getInt(1);
+				result.put("id", id);
+				result.put("pic", pic);
+			}
+			return result;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		return null;
+	}
+
+	public static JSONObject getCategories(Connection con, JSONObject parameters) {
+		String parent = parameters.get("category").toString();
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = con
+					.prepareStatement("SELECT id,title FROM categories c WHERE parent_category IS NOT DISTINCT FROM ?");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		try {
+			if (parent.equals("null")) {
+				pstmt.setNull(1, Types.INTEGER);
+			} else {
+				pstmt.setInt(1, Integer.valueOf(parent));
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+
 		}
 
-		PreparedStatement nextCategoryStatement = null;
-
+		ResultSet rs;
+		JSONObject resultObject = new JSONObject();
 		try {
-			nextCategoryStatement = con
-					.prepareStatement("WITH paras AS (SELECT (?)::ltree as path) SELECT part as id, title FROM categories c, (SELECT DISTINCT subpath(category_path,0,nlevel(paras.path)+1) as part FROM materials m,paras WHERE paras.path @> m.category_path) p WHERE ('*.'||(c.id::text))::lquery ~ part");
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			nextCategoryStatement.setString(1, path);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		try {
-			ResultSet rs = nextCategoryStatement.executeQuery();
+			rs = pstmt.executeQuery();
 			while (rs.next()) {
-				String id = rs.getString(1);
-				String title = rs.getString(2);
-				resultObject.put(id, title);
+				int id = rs.getInt(1);
+				String name = rs.getString(2);
+				resultObject.put(id, name);
 			}
 			return resultObject;
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	public static JSONObject getTopCategories(Connection con) {
+	public static JSONObject getMaterial(Connection con, JSONObject parameters) {
+		Integer parent = Integer.valueOf(parameters.get("category").toString());
 		PreparedStatement pstmt = null;
 		try {
 			pstmt = con
-					.prepareStatement("SELECT * FROM categories c WHERE ((c.id::text)||'.*')::lquery ~ ANY (SELECT category_path FROM materials)");
+					.prepareStatement("SELECT material_title,material_text,material_pic FROM categories c WHERE parent_category = ?");
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		try {
+			pstmt.setInt(1, Integer.valueOf(parent));
+		} catch (SQLException e) {
+
+		}
+
 		ResultSet rs;
 		JSONObject resultObject = new JSONObject();
 		try {
@@ -206,34 +293,34 @@ public class DataBaseFunctions {
 		}
 		return resultArray;
 	}
-	
-	
-	private static int insertQuestionBox(Connection con,JSONObject questionBox) throws SQLException {
 
-		JSONArray jsonQuestions = (JSONArray) questionBox
-				.remove("questions");
-//		System.out.println("Questions: " + jsonQuestions.toString());
+	private static int insertQuestionBox(Connection con, JSONObject questionBox)
+			throws SQLException {
+
+		JSONArray jsonQuestions = (JSONArray) questionBox.remove("questions");
+		// System.out.println("Questions: " + jsonQuestions.toString());
 		Object descriptionO = questionBox.remove("description");
-//		if (descriptionO==null) {
-//			throw new IllegalArgumentException(String.format(
-//					"description (of the questionBox) was not provided as parameter.\n"
-//							+ "Function: insertNewQuestionPath()\n" + "Parameters: %s",
-//					Helper.niceJsonPrint(parameters, "")));
-//		}
-		String description = descriptionO==null?"":descriptionO.toString();
+		// if (descriptionO==null) {
+		// throw new IllegalArgumentException(String.format(
+		// "description (of the questionBox) was not provided as parameter.\n"
+		// + "Function: insertNewQuestionPath()\n" + "Parameters: %s",
+		// Helper.niceJsonPrint(parameters, "")));
+		// }
+		String description = descriptionO == null ? "" : descriptionO
+				.toString();
 		int questionNum = jsonQuestions.size();
-//		String[] questionStrings = new String[questionNum];
+		// String[] questionStrings = new String[questionNum];
 		int count = 0;
-		
-//		for (Object questionObject : jsonQuestions) {
-//			JSONObject jsonQuestion = (JSONObject) questionObject;
-//			String question = jsonQuestion.get("question").toString();
-//			Object questionDetO = jsonQuestion.get("details");
-//			String questionDet = questionDetO==null?"":questionDetO.toString();
-//			String questionString = "(" + question + "," + questionDet + ")";
-//			questionStrings[count++] = questionString;
-////			System.out.println("one question String: " + questionString);
-//		}
+
+		// for (Object questionObject : jsonQuestions) {
+		// JSONObject jsonQuestion = (JSONObject) questionObject;
+		// String question = jsonQuestion.get("question").toString();
+		// Object questionDetO = jsonQuestion.get("details");
+		// String questionDet = questionDetO==null?"":questionDetO.toString();
+		// String questionString = "(" + question + "," + questionDet + ")";
+		// questionStrings[count++] = questionString;
+		// // System.out.println("one question String: " + questionString);
+		// }
 
 		String[] q_questionss = new String[questionNum];
 		String[] q_details = new String[questionNum];
@@ -242,18 +329,17 @@ public class DataBaseFunctions {
 			JSONObject jsonQuestion = (JSONObject) questionObject;
 			String question = jsonQuestion.get("question").toString();
 			Object questionDetO = jsonQuestion.get("details");
-			String questionDet = questionDetO==null?"":questionDetO.toString();
+			String questionDet = questionDetO == null ? "" : questionDetO
+					.toString();
 			q_questionss[count] = question;
 			q_details[count++] = questionDet;
 		}
-		
+
 		try {
-			
-			Array questionArray = con.createArrayOf("text",
-					q_questionss); //((?,?)::question)
-			Array detailArray = con.createArrayOf("text",
-					q_details); //((?,?)::question)
-			
+
+			Array questionArray = con.createArrayOf("text", q_questionss); // ((?,?)::question)
+			Array detailArray = con.createArrayOf("text", q_details); // ((?,?)::question)
+
 			insertQuestionBoxStatement.setString(1, description);
 			insertQuestionBoxStatement.setArray(2, questionArray);
 			insertQuestionBoxStatement.setArray(3, detailArray);
@@ -288,11 +374,9 @@ public class DataBaseFunctions {
 		}
 
 		int questionBoxID = rs.getInt(1);
-		
+
 		return questionBoxID;
 	}
-	
-	
 
 	/**
 	 * 
@@ -329,30 +413,31 @@ public class DataBaseFunctions {
 		boolean firstB = true;
 		JSONObject first = (JSONObject) parameters.clone();
 		ArrayDeque<JSONObject> jobQueue = new ArrayDeque<JSONObject>();
-		
-		
+
 		// Put first QuestionBox job Queue
-		
+
 		jobQueue.add(first);
 
 		int topic = -1;
-		
+
 		while (!jobQueue.isEmpty()) {
 			JSONObject questionBoxJob = jobQueue.pop();
-			System.out.println("This is a full job: " + questionBoxJob.toJSONString());
+			System.out.println("This is a full job: "
+					+ questionBoxJob.toJSONString());
 			Set<Object> testkeys = questionBoxJob.keySet();
 			System.out.println("Keys of job:");
 			for (Object key : testkeys)
-				System.out.println(key.toString()+" : "+questionBoxJob.get(key).toString());
+				System.out.println(key.toString() + " : "
+						+ questionBoxJob.get(key).toString());
 			System.out.println();
-			JSONObject questionBoxObject = (JSONObject) questionBoxJob.remove("questionbox");
-//			System.out.println("Found Box");
-			
+			JSONObject questionBoxObject = (JSONObject) questionBoxJob
+					.remove("questionbox");
+			// System.out.println("Found Box");
+
 			int questionBoxID = insertQuestionBox(con, questionBoxObject);
 
-//			System.out.println("ID of Box: " + questionBoxID);
-			
-			
+			// System.out.println("ID of Box: " + questionBoxID);
+
 			if (!firstB) {
 				JSONObject source = (JSONObject) questionBoxJob.get("source");
 				String source_yes_list = source.get("source_yes_list")
@@ -360,9 +445,10 @@ public class DataBaseFunctions {
 				String[] source_yes_Strings = source_yes_list.split(",");
 				Integer source_id = Integer.valueOf(source.get("source_id")
 						.toString());
-//				System.out.println("these sources for box " + questionBoxID + ":");
+				// System.out.println("these sources for box " + questionBoxID +
+				// ":");
 				for (String source_yes_String : source_yes_Strings) {
-//					System.out.println(source_id);
+					// System.out.println(source_id);
 					insertActionStatement.setInt(1, source_id);
 					insertActionStatement.setInt(2,
 							Integer.valueOf(source_yes_String));
@@ -370,18 +456,20 @@ public class DataBaseFunctions {
 					insertActionStatement.setInt(4, questionBoxID);
 					insertActionStatement.addBatch();
 				}
-//				System.out.println("-");
+				// System.out.println("-");
 				insertActionStatement.executeBatch();
 			} else {
 
-				//Prepare Statement to insert topic
+				// Prepare Statement to insert topic
 
 				firstB = false;
 				try {
 
-					JSONObject topicObject = (JSONObject) questionBoxJob.remove("topic");
+					JSONObject topicObject = (JSONObject) questionBoxJob
+							.remove("topic");
 					String topic_title = topicObject.get("title").toString();
-					Object topic_descriptionOb = topicObject.remove("description");
+					Object topic_descriptionOb = topicObject
+							.remove("description");
 					String topic_description = topic_descriptionOb == null ? ""
 							: topic_descriptionOb.toString();
 					insertTopicStatement.setString(1, topic_title);
@@ -392,13 +480,15 @@ public class DataBaseFunctions {
 							"Adding parameters to the statement failed\n"
 									+ "Function: insertNewQuestionPath()\n"
 									+ "Statement: %s\n" + "Parameters: %s\n"
-									+ "Details: %s", insertTopicStatement.toString(),
-							Helper.niceJsonPrint(parameters, ""), e.getMessage()));
+									+ "Details: %s",
+							insertTopicStatement.toString(),
+							Helper.niceJsonPrint(parameters, ""),
+							e.getMessage()));
 				}
 				ResultSet topicResult;
-				
+
 				// Execute Statement to prepare topic
-				
+
 				try {
 					topicResult = insertTopicStatement.executeQuery();
 				} catch (SQLException e) {
@@ -406,8 +496,10 @@ public class DataBaseFunctions {
 							"Execution of Statement failed.\n"
 									+ "Function: insertNewQuestionPath()\n"
 									+ "Statement: %s\n" + "Parameters: %s\n"
-									+ "Details: %s", insertTopicStatement.toString(),
-							Helper.niceJsonPrint(parameters, ""), e.getMessage()));
+									+ "Details: %s",
+							insertTopicStatement.toString(),
+							Helper.niceJsonPrint(parameters, ""),
+							e.getMessage()));
 				}
 				if (!topicResult.next()) {
 					throw new SQLException(String.format(
@@ -420,19 +512,20 @@ public class DataBaseFunctions {
 				topic = topicResult.getInt(1);
 			}
 
-//			System.out.println("ID of box: " + questionBoxID);
-//			System.out.println(questionBoxJob.toJSONString());
+			// System.out.println("ID of box: " + questionBoxID);
+			// System.out.println(questionBoxJob.toJSONString());
 
 			Set<Object> keySet = questionBoxJob.keySet();
 
 			for (Object keyObject : keySet) {
 
 				String keyString = keyObject.toString();
-//				System.out.println("Next key: " + keyString);
-//				System.out.println("there is a test of \"" + keyString + "\"");
+				// System.out.println("Next key: " + keyString);
+				// System.out.println("there is a test of \"" + keyString +
+				// "\"");
 				if (!keyString.matches("(,*[0-9]*,*)*"))
 					continue;
-//				System.out.println("got here");
+				// System.out.println("got here");
 
 				JSONObject valueObject = (JSONObject) questionBoxJob
 						.get(keyObject);
@@ -463,7 +556,7 @@ public class DataBaseFunctions {
 						insertActionStatement.setInt(4, topic);
 						insertActionStatement.execute();
 					} else if ("treatment".equals(action)) {
-//						System.out.println("found the treatment");
+						// System.out.println("found the treatment");
 						JSONObject treatmentObject = (JSONObject) valueObject
 								.get("treatment");
 						// String treatment_title =
@@ -606,8 +699,9 @@ public class DataBaseFunctions {
 		Integer questionBox = Integer.valueOf(questionboxS);
 		String yesCountS = parameters.get("yes_count").toString();
 		Integer yesCount = Integer.valueOf(yesCountS);
-		
-		System.out.println(yesCount + " questions haven been answered with yes.");
+
+		System.out.println(yesCount
+				+ " questions haven been answered with yes.");
 
 		PreparedStatement pstmt = null;
 		try {
@@ -628,28 +722,26 @@ public class DataBaseFunctions {
 					pstmt.toString(), Helper.niceJsonPrint(parameters, ""),
 					e.getMessage()));
 		}
-//		System.out.println(pstmt.toString());
+		System.out.println(pstmt.toString());
 		ResultSet rs;
 		try {
 			rs = pstmt.executeQuery();
 		} catch (SQLException e) {
-			String error = String.format(
-					"Execution of Statement failed.\n"
-							+ "Function: getNextQuestionBox()\n"
-							+ "Statement: %s\n" + "Parameters: %s\n"
-							+ "Details: %s", pstmt.toString(),
+			String error = String.format("Execution of Statement failed.\n"
+					+ "Function: getNextQuestionBox()\n" + "Statement: %s\n"
+					+ "Parameters: %s\n" + "Details: %s", pstmt.toString(),
 					Helper.niceJsonPrint(parameters, ""), e.getMessage());
-//			System.out.println("Error message: " +error);
+			// System.out.println("Error message: " +error);
 			throw new SQLException(error);
 		}
 		if (!rs.next()) {
 			return null;
 		}
 		String jsonString = rs.getString(1);
-//		System.out.println("This is the String: "+jsonString);
+		System.out.println("This is the String: " + jsonString);
 		JSONObject json = (JSONObject) jsonParser.parse(jsonString);
-//		System.out.println("This is the json: ");
-//		System.out.println(Helper.niceJsonPrint(json, ""));
+		// System.out.println("This is the json: ");
+		// System.out.println(Helper.niceJsonPrint(json, ""));
 		return json;
 	}
 
@@ -693,78 +785,68 @@ public class DataBaseFunctions {
 		return json;
 	}
 
-	private static JSONArray getSampleQuestionArray(String[] questions) {
-		JSONArray output = new JSONArray();
-		for (String question : questions) {
-			JSONObject jsonQuestion = new JSONObject();
-			jsonQuestion.put("question", question);
-			jsonQuestion.put("details",
-					"<Here we could have some Details for that question>");
-			output.add(jsonQuestion);
-		}
-		return output;
-	}
-
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		Connection con;
 		try {
 			con = getWebConnection();
-			String a = "{ \"topic\": " +
-								"{ \"title\": \"gd_b\" }, " +
-						"\"questionbox\": { " +
-										"\"questions\": [{ \"details\": \"d1\", \"question\": \"s1\" }] " +
-										"}, " +
-						"\"1,\": { " +
-								"\"questionbox\": { " +
-											"\"1,\": { " +
-													"\"treatment\": { " +
-																"\"description\": \"t1\" " +
-													"}, " +
-													"\"action\": \"treatment\" " +
-											"}, " +
-											"\"description\": \"sd1\", " +
-											"\"0,\": { \"action\": \"next_topic\" }, " +
-											"\"questions\": [{ \"details\": \"sd11\", \"question\": \"ss11\" }] " +
-								"}, " +
-								"\"action\": \"next_box\" " +
-								"}, \"0,\": { \"action\": \"next_topic\" } }";
-			JSONParser jp = new JSONParser();
-			JSONObject o = (JSONObject) jp.parse(a);
-			System.out.println(Helper.niceJsonPrint(o, ""));
-			insertNewQuestionPath(con, o);
+			// String a = "{ \"topic\": " +
+			// "{ \"title\": \"gd_b\" }, " +
+			// "\"questionbox\": { " +
+			// "\"questions\": [{ \"details\": \"d1\", \"question\": \"s1\" }] "
+			// +
+			// "}, " +
+			// "\"1,\": { " +
+			// "\"questionbox\": { " +
+			// "\"1,\": { " +
+			// "\"treatment\": { " +
+			// "\"description\": \"t1\" " +
+			// "}, " +
+			// "\"action\": \"treatment\" " +
+			// "}, " +
+			// "\"description\": \"sd1\", " +
+			// "\"0,\": { \"action\": \"next_topic\" }, " +
+			// "\"questions\": [{ \"details\": \"sd11\", \"question\": \"ss11\" }] "
+			// +
+			// "}, " +
+			// "\"action\": \"next_box\" " +
+			// "}, \"0,\": { \"action\": \"next_topic\" } }";
+			// JSONParser jp = new JSONParser();
+			// JSONObject o = (JSONObject) jp.parse(a);
+			// System.out.println(Helper.niceJsonPrint(o, ""));
+			// insertNewQuestionPath(con, o);
 			// JSONArray object = getTopics(con);
 			// System.out.println("All topics");
 			// System.out.println(Helper.niceJsonPrint(object, ""));
 			//
-//			 JSONObject parameters;
-//			 JSONObject result;
-//			
-//			 parameters = new JSONObject();
-//			 parameters.put("topic", 1);
-//			 result = getFirstQuestionBox(con, parameters);
-//			 System.out
-//			 .println("First Question Box (delivered with topic details):");
-//			 System.out.println(result.toJSONString());
-//			 System.out.println();
-//			
-//			 parameters = new JSONObject();
-//			 parameters.put("questionbox", 25);
-//			 parameters.put("yes_count", 0);
-//			 result = getNextAction(con, parameters);
-//			 System.out.println("Questions answered with yes: 0");
-//			 System.out.println("Next Action: " + result.get("action"));
-//			 System.out.println(result.toJSONString());
-//			 System.out.println();
-//			
-//			 parameters = new JSONObject();
-//			 parameters.put("questionbox", 25);
-//			 parameters.put("yes_count", 1);
-//			 result = getNextAction(con, parameters);
-//			 System.out.println("Questions answered with yes: 1");
-//			 System.out.println("Next Action: " + result.get("action"));
-//			 System.out.println(result.toJSONString());
-//			 System.out.println();
+			// JSONObject parameters;
+			// JSONObject result;
+			//
+			// parameters = new JSONObject();
+			// parameters.put("topic", 37);
+			// result = getFirstQuestionBox(con, parameters);
+			// System.out
+			// .println("First Question Box (delivered with topic details):");
+			// System.out.println(result.toJSONString());
+			// System.out.println();
+			//
+			// parameters = new JSONObject();
+			// parameters.put("questionbox", 25);
+			// parameters.put("yes_count", 0);
+			// result = getNextAction(con, parameters);
+			// System.out.println("Questions answered with yes: 0");
+			// System.out.println("Next Action: " + result.get("action"));
+			// System.out.println(result.toJSONString());
+			// System.out.println();
+			//
+			// parameters = new JSONObject();
+			// parameters.put("questionbox", 25);
+			// parameters.put("yes_count", 1);
+			// result = getNextAction(con, parameters);
+			// System.out.println("Questions answered with yes: 1");
+			// System.out.println("Next Action: " + result.get("action"));
+			// System.out.println(result.toJSONString());
+			// System.out.println();
 			//
 			// parameters = new JSONObject();
 			// parameters.put("questionbox", 1);
@@ -791,10 +873,20 @@ public class DataBaseFunctions {
 			// in3.put("path", "5.10.13");
 			// JSONObject res3 = getNextCategories(con, in3);
 			// System.out.println(res3.toJSONString());
+
+			JSONObject p1 = new JSONObject();
+			p1.put("category", "null");
+			JSONObject r1 = getCategories(con, p1);
+			System.out.println(r1.toJSONString());
+
+			JSONObject p2 = new JSONObject();
+			p1.put("category", "5");
+			JSONObject r2 = getCategories(con, p1);
+			System.out.println(r2.toJSONString());
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (ParseException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

@@ -85,14 +85,16 @@ public class Training extends MVCPortlet {
 	}
 	
 	
-	public void getTopCategories(ResourceRequest request, ResourceResponse response)
+	public void getCategories(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
 		JSONObject responseJSON = new JSONObject();
+
+		JSONObject parameters = requestToJSONObject(request);
 		
 		try {
 			Connection con = DataBaseFunctions.getWebConnection();
-			responseJSON = DataBaseFunctions.getTopCategories(con);
+			responseJSON = DataBaseFunctions.getCategories(con,parameters);
 			writeMessage(response,responseJSON);
 		} catch (SQLException e) {	
 			JSONObject errorObject =  new JSONObject();
@@ -101,95 +103,70 @@ public class Training extends MVCPortlet {
 			writeMessage(response,errorObject);
 			return;
 		}
+	}
+
+	public void addCategory(ResourceRequest request, ResourceResponse response)
+			throws PortletException, IOException {
 		
-		/*
-		JSONArray list = new JSONArray();
-        JSONObject cat1 = new JSONObject();
-        JSONObject cat2 = new JSONObject();
-        JSONObject cat3 = new JSONObject();
-        JSONObject cat4 = new JSONObject();
-        JSONObject cat5 = new JSONObject();
-        cat1.put("id", 10);
-        cat1.put("name", "Children");
-        cat2.put("id", 20);
-        cat2.put("name", "Pregnant women");
-        cat3.put("id", 30);
-        cat3.put("name", "Elderly");
-        cat4.put("id", 40);
-        cat4.put("name", "Infections");
-        cat5.put("id", 50);
-        cat5.put("name", "Mental health");
-        list.add(cat1);
-        list.add(cat2);
-        list.add(cat3);
-        list.add(cat4);
-        list.add(cat5);
+		JSONObject responseJSON = new JSONObject();
+
+		JSONObject parameters = requestToJSONObject(request);
 		
-		 HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
-         httpResponse.setContentType("application/json;charset=UTF-8");
-         ServletResponseUtil.write(httpResponse, list.toJSONString());
-		*/
+		try {
+			Connection con = DataBaseFunctions.getWebConnection();
+			responseJSON = DataBaseFunctions.addCategory(con,parameters);
+			writeMessage(response,responseJSON);
+		} catch (SQLException e) {	
+			JSONObject errorObject =  new JSONObject();
+			errorObject.put("error", "Database");
+			errorObject.put("details", e.getMessage());
+			writeMessage(response,errorObject);
+			return;
+		}
+	}
+
+	public void getMaterial(ResourceRequest request, ResourceResponse response)
+			throws PortletException, IOException {
+		
+		JSONObject responseJSON = new JSONObject();
+
+		JSONObject parameters = requestToJSONObject(request);
+		
+		try {
+			Connection con = DataBaseFunctions.getWebConnection();
+			responseJSON = DataBaseFunctions.getMaterial(con,parameters);
+			writeMessage(response,responseJSON);
+		} catch (SQLException e) {	
+			JSONObject errorObject =  new JSONObject();
+			errorObject.put("error", "Database");
+			errorObject.put("details", e.getMessage());
+			writeMessage(response,errorObject);
+			return;
+		}
+	}
+
+	public void addMaterial(ResourceRequest request, ResourceResponse response)
+			throws PortletException, IOException {
+		
+		JSONObject responseJSON = new JSONObject();
+
+		JSONObject parameters = requestToJSONObject(request);
+		
+		try {
+			Connection con = DataBaseFunctions.getWebConnection();
+			responseJSON = DataBaseFunctions.addMaterial(con,parameters);
+			writeMessage(response,responseJSON);
+		} catch (SQLException e) {	
+			JSONObject errorObject =  new JSONObject();
+			errorObject.put("error", "Database");
+			errorObject.put("details", e.getMessage());
+			writeMessage(response,errorObject);
+			return;
+		}
 	}
 	
-	@SuppressWarnings("unchecked")
-	public void getSubCategories(ResourceRequest request, ResourceResponse response)
-			throws PortletException, IOException {
-		
-		String index = request.getParameter("index");
-		JSONObject responseJSON = new JSONObject();
-		JSONObject params = requestToJSONObject(request);
-		
-		try {
-			Connection con = DataBaseFunctions.getWebConnection();
-			responseJSON = DataBaseFunctions.getNextCategories(con, params);
-			responseJSON.put("index",index);
-			writeMessage(response,responseJSON);
-		} catch (SQLException e) {	
-			JSONObject errorObject =  new JSONObject();
-			errorObject.put("error", "Database");
-			errorObject.put("details", e.getMessage());
-			writeMessage(response,errorObject);
-			return;
-		}
-		
-		
-		/*
-		String catId = request.getParameter("category_id");
-		
-		// IMPORTANT do not delete
-		String index = request.getParameter("index");
-		
-		JSONArray list = new JSONArray();
-        JSONObject cat1 = new JSONObject();
-        JSONObject cat2 = new JSONObject();
-        JSONObject cat3 = new JSONObject();
-        JSONObject cat4 = new JSONObject();
-        JSONObject cat5 = new JSONObject();
-        cat1.put("id", 10);
-        cat1.put("name", "Clinical disorders");
-        cat2.put("id", 20);
-        cat2.put("name", "Relationships");
-        cat3.put("id", 30);
-        cat3.put("name", "Medical and Developmental Disorders");
-        cat4.put("id", 40);
-        cat4.put("name", "Psychosocial Stressors")
-        cat5.put("id", 50);
-        cat5.put("name", "Emotional and Social Functioning");
-        list.add(cat1);
-        list.add(cat2);
-        list.add(cat3);
-        list.add(cat4);
-        list.add(cat5);
-		
-        JSONObject responseJSON = new JSONObject();
-        responseJSON.put("index", index);
-        responseJSON.put("objects", list);
-        
-        HttpServletResponse httpResponse = PortalUtil.getHttpServletResponse(response);
-        httpResponse.setContentType("application/json;charset=UTF-8");
-        ServletResponseUtil.write(httpResponse, responseJSON.toJSONString());
-		*/
-	}
+	
+	
 	
 	@SuppressWarnings("unchecked")
 	public void getMaterialTitles(ResourceRequest request, ResourceResponse response)
@@ -635,12 +612,20 @@ public class Training extends MVCPortlet {
 				
 		String resourceID = request.getResourceID();
 		 
-		 if ("getTopCategories".equals(resourceID)) {
-			 getTopCategories(request, response);
+		 if ("getCategories".equals(resourceID)) {
+			 getCategories(request, response);
 		 }
-		 
-		 if ("getSubCategories".equals(resourceID)) {
-			 getSubCategories(request, response);
+
+		 if ("addCategory".equals(resourceID)) {
+			 addCategory(request, response);
+		 }
+
+		 if ("addMaterial".equals(resourceID)) {
+			 addMaterial(request, response);
+		 }
+
+		 if ("getMaterial".equals(resourceID)) {
+			 getMaterial(request, response);
 		 }
 		 
 		 if ("getMaterialTitles".equals(resourceID)) {
