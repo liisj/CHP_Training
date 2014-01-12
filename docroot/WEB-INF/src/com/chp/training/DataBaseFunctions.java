@@ -200,7 +200,8 @@ public class DataBaseFunctions {
 	}
 
 	public static JSONObject getCategories(Connection con, JSONObject parameters) {
-		String parent = parameters.get("category").toString();
+		Object parentO = parameters.get("category");
+		String parent = parentO == null?"null":parentO.toString();
 		PreparedStatement pstmt = null;
 		try {
 			pstmt = con
