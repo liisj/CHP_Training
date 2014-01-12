@@ -8,10 +8,7 @@ ActionRequest.ACTION_NAME, "search");*/
 %>
  -->
 
-<portlet:resourceURL id="getTopCategories" var="getTopCategories">
-	<portlet:param name="ajaxAction" value="getData"></portlet:param>
-</portlet:resourceURL>
-<portlet:resourceURL id="getSubCategories" var="getSubCategories">
+<portlet:resourceURL id="getCategories" var="getCategories">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 </portlet:resourceURL>
 <portlet:resourceURL id="getMaterialTitles" var="getMaterialTitles">
@@ -52,7 +49,7 @@ $(document).ready(function() {
 	// Fill categories pane
 	
 	// Query the top level of categories
-	var request = jQuery.getJSON('<%=getTopCategories%>');
+	var request = jQuery.getJSON('<%=getCategories%>');
 	request.done(function(data1) {
 		console.log("data1: ");
 		console.log(data1);
@@ -74,10 +71,10 @@ $(document).ready(function() {
 				.attr("id", "innerDiv1_" + i);
 			
 			// For each, query the second level of categories
-			var params = {"index" : i, "path" : key};
+			var params = {"index" : i, "category" : key};
 			console.log("level 2 params");
 			console.log(params);
-			var subRequest = $.getJSON('<%=getSubCategories%>',params);
+			var subRequest = $.getJSON('<%=getCategories%>',params);
 			subRequest.done(function(data2) {
 				console.log("data2: ");
 				console.log(data2);
