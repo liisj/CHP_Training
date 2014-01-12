@@ -201,7 +201,7 @@ public class DataBaseFunctions {
 
 	public static JSONObject getCategories(Connection con, JSONObject parameters) {
 		Object parentO = parameters.get("category");
-		String parent = parentO == null?"null":parentO.toString();
+		String parent = parentO == null?"NaN":parentO.toString();
 		PreparedStatement pstmt = null;
 		try {
 			pstmt = con
@@ -212,7 +212,7 @@ public class DataBaseFunctions {
 		}
 
 		try {
-			if (parent.equals("null")) {
+			if (parent.equals("NaN")) {
 				pstmt.setNull(1, Types.INTEGER);
 			} else {
 				pstmt.setInt(1, Integer.valueOf(parent));
