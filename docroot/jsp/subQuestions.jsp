@@ -44,14 +44,20 @@ $(document).on("click",".nextBtn",function(){
 	q_index += 1;
 	
 	var yes_count = 0;
-	var answerBtns = document.getElementsByName("ans_" + $(this).attr("questionSet"));
-	for (var i in answerBtns) {
-		if (answerBtns[i].id == "ans_" + $(this).attr("questionSet") + "_1" && 
-				answerBtns[i].checked) {
-			yes_count += 1;
+	for (var i = 0; i >= 0; i++) {
+		var answerBtns = document.getElementsByName("ans_" + $(this).attr("questionSet") + "_" + i);
+		if (answerBtns[0] == null) {
+			break;
+		} 
+		for (var j in answerBtns) {
+	// 		TODO this stuff needs changing too once numbering is fixed
+			if (answerBtns[j].id == "ans_" + $(this).attr("questionSet") + "_" + i + "_y" && 
+					answerBtns[j].checked) {
+				yes_count += 1;
+			}
 		}
 	}
-	
+		
 	console.log("yes_count: " + yes_count);
 	var params = {
 			"questionbox" : $(this).attr("questionbox_id"),
@@ -145,8 +151,8 @@ function displayQuestions(data) {
 		var ans1 = $("<input>");
 		ans1
 			.attr("type","radio")
-			.attr("name","ans_" + q_index)
-			.attr("id","ans_" + q_index + "_1")
+			.attr("name","ans_" + q_index + "_" + i)
+			.attr("id","ans_" + q_index + "_" + i + "_y")
 			.attr("questionSet",q_index)
 			.appendTo(qAnsP);
 		var ansLbl1 = $("<label>");
@@ -158,8 +164,8 @@ function displayQuestions(data) {
 		var ans2 = $("<input>");
 		ans2
 			.attr("type","radio")
-			.attr("name","ans_" + q_index)
-			.attr("id","ans_" + q_index + "_2")
+			.attr("name","ans_" + q_index + "_" + i)
+			.attr("id","ans_" + q_index + "_" + i + "_n")
 			.attr("questionSet",q_index)
 			.appendTo(qAnsP);
 		var ansLbl2 = $("<label>");
