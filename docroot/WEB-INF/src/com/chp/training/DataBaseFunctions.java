@@ -222,22 +222,41 @@ public class DataBaseFunctions {
 //		}
 		String description = descriptionO==null?"":descriptionO.toString();
 		int questionNum = jsonQuestions.size();
-		String[] questionStrings = new String[questionNum];
+//		String[] questionStrings = new String[questionNum];
 		int count = 0;
+		
+//		for (Object questionObject : jsonQuestions) {
+//			JSONObject jsonQuestion = (JSONObject) questionObject;
+//			String question = jsonQuestion.get("question").toString();
+//			Object questionDetO = jsonQuestion.get("details");
+//			String questionDet = questionDetO==null?"":questionDetO.toString();
+//			String questionString = "(" + question + "," + questionDet + ")";
+//			questionStrings[count++] = questionString;
+////			System.out.println("one question String: " + questionString);
+//		}
+
+		String[] q_questionss = new String[questionNum];
+		String[] q_details = new String[questionNum];
+
 		for (Object questionObject : jsonQuestions) {
 			JSONObject jsonQuestion = (JSONObject) questionObject;
 			String question = jsonQuestion.get("question").toString();
 			Object questionDetO = jsonQuestion.get("details");
 			String questionDet = questionDetO==null?"":questionDetO.toString();
-			String questionString = "(" + question + "," + questionDet + ")";
-			questionStrings[count++] = questionString;
-//			System.out.println("one question String: " + questionString);
+			q_questionss[count] = question;
+			q_details[count++] = questionDet;
 		}
+		
 		try {
-			Array questionArray = con.createArrayOf("question",
-					questionStrings);
+			
+			Array questionArray = con.createArrayOf("text",
+					q_questionss); //((?,?)::question)
+			Array detailArray = con.createArrayOf("text",
+					q_details); //((?,?)::question)
+			
 			insertQuestionBoxStatement.setString(1, description);
 			insertQuestionBoxStatement.setArray(2, questionArray);
+			insertQuestionBoxStatement.setArray(3, detailArray);
 
 		} catch (SQLException e) {
 			throw new SQLException(String.format(
@@ -691,61 +710,61 @@ public class DataBaseFunctions {
 		Connection con;
 		try {
 			con = getWebConnection();
-//			String a = "{ \"topic\": " +
-//								"{ \"title\": \"gd_b\" }, " +
-//						"\"questionbox\": { " +
-//										"\"questions\": [{ \"details\": \"d1\", \"question\": \"s1\" }] " +
-//										"}, " +
-//						"\"1,\": { " +
-//								"\"questionbox\": { " +
-//											"\"1,\": { " +
-//													"\"treatment\": { " +
-//																"\"description\": \"t1\" " +
-//													"}, " +
-//													"\"action\": \"treatment\" " +
-//											"}, " +
-//											"\"description\": \"sd1\", " +
-//											"\"0,\": { \"action\": \"next_topic\" }, " +
-//											"\"questions\": [{ \"details\": \"sd11\", \"question\": \"ss11\" }] " +
-//								"}, " +
-//								"\"action\": \"next_box\" " +
-//								"}, \"0,\": { \"action\": \"next_topic\" } }";
-//			JSONParser jp = new JSONParser();
-//			JSONObject o = (JSONObject) jp.parse(a);
-//			System.out.println(Helper.niceJsonPrint(o, ""));
-//			insertNewQuestionPath(con, o);
+			String a = "{ \"topic\": " +
+								"{ \"title\": \"gd_b\" }, " +
+						"\"questionbox\": { " +
+										"\"questions\": [{ \"details\": \"d1\", \"question\": \"s1\" }] " +
+										"}, " +
+						"\"1,\": { " +
+								"\"questionbox\": { " +
+											"\"1,\": { " +
+													"\"treatment\": { " +
+																"\"description\": \"t1\" " +
+													"}, " +
+													"\"action\": \"treatment\" " +
+											"}, " +
+											"\"description\": \"sd1\", " +
+											"\"0,\": { \"action\": \"next_topic\" }, " +
+											"\"questions\": [{ \"details\": \"sd11\", \"question\": \"ss11\" }] " +
+								"}, " +
+								"\"action\": \"next_box\" " +
+								"}, \"0,\": { \"action\": \"next_topic\" } }";
+			JSONParser jp = new JSONParser();
+			JSONObject o = (JSONObject) jp.parse(a);
+			System.out.println(Helper.niceJsonPrint(o, ""));
+			insertNewQuestionPath(con, o);
 			// JSONArray object = getTopics(con);
 			// System.out.println("All topics");
 			// System.out.println(Helper.niceJsonPrint(object, ""));
 			//
-			 JSONObject parameters;
-			 JSONObject result;
-			
-			 parameters = new JSONObject();
-			 parameters.put("topic", 1);
-			 result = getFirstQuestionBox(con, parameters);
-			 System.out
-			 .println("First Question Box (delivered with topic details):");
-			 System.out.println(result.toJSONString());
-			 System.out.println();
-			
-			 parameters = new JSONObject();
-			 parameters.put("questionbox", 25);
-			 parameters.put("yes_count", 0);
-			 result = getNextAction(con, parameters);
-			 System.out.println("Questions answered with yes: 0");
-			 System.out.println("Next Action: " + result.get("action"));
-			 System.out.println(result.toJSONString());
-			 System.out.println();
-			
-			 parameters = new JSONObject();
-			 parameters.put("questionbox", 25);
-			 parameters.put("yes_count", 1);
-			 result = getNextAction(con, parameters);
-			 System.out.println("Questions answered with yes: 1");
-			 System.out.println("Next Action: " + result.get("action"));
-			 System.out.println(result.toJSONString());
-			 System.out.println();
+//			 JSONObject parameters;
+//			 JSONObject result;
+//			
+//			 parameters = new JSONObject();
+//			 parameters.put("topic", 1);
+//			 result = getFirstQuestionBox(con, parameters);
+//			 System.out
+//			 .println("First Question Box (delivered with topic details):");
+//			 System.out.println(result.toJSONString());
+//			 System.out.println();
+//			
+//			 parameters = new JSONObject();
+//			 parameters.put("questionbox", 25);
+//			 parameters.put("yes_count", 0);
+//			 result = getNextAction(con, parameters);
+//			 System.out.println("Questions answered with yes: 0");
+//			 System.out.println("Next Action: " + result.get("action"));
+//			 System.out.println(result.toJSONString());
+//			 System.out.println();
+//			
+//			 parameters = new JSONObject();
+//			 parameters.put("questionbox", 25);
+//			 parameters.put("yes_count", 1);
+//			 result = getNextAction(con, parameters);
+//			 System.out.println("Questions answered with yes: 1");
+//			 System.out.println("Next Action: " + result.get("action"));
+//			 System.out.println(result.toJSONString());
+//			 System.out.println();
 			//
 			// parameters = new JSONObject();
 			// parameters.put("questionbox", 1);
