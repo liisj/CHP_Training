@@ -259,9 +259,12 @@ public class DataBaseFunctions {
 		try {
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
-				int id = rs.getInt(1);
-				String name = rs.getString(2);
-				resultObject.put(id, name);
+				String material_title = rs.getString(1);
+				String material_text = rs.getString(2);
+				int material_pic = rs.getInt(3);
+				resultObject.put("material_title", material_title);
+				resultObject.put("material_text", material_text);
+				resultObject.put("material_pic", material_pic);
 			}
 			return resultObject;
 		} catch (SQLException e) {
