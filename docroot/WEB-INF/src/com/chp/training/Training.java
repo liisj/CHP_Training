@@ -88,6 +88,7 @@ public class Training extends MVCPortlet {
 	public void getCategories(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
+		String index = request.getParameter("index");
 		JSONObject responseJSON = new JSONObject();
 
 		JSONObject parameters = requestToJSONObject(request);
@@ -95,6 +96,7 @@ public class Training extends MVCPortlet {
 		try {
 			Connection con = DataBaseFunctions.getWebConnection();
 			responseJSON = DataBaseFunctions.getCategories(con,parameters);
+			responseJSON.put("index",index);
 			writeMessage(response,responseJSON);
 		} catch (SQLException e) {	
 			JSONObject errorObject =  new JSONObject();
