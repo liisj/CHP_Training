@@ -96,7 +96,9 @@ public class Training extends MVCPortlet {
 		try {
 			Connection con = DataBaseFunctions.getWebConnection();
 			responseJSON = DataBaseFunctions.getCategories(con,parameters);
-			responseJSON.put("index",index);
+			if (index != null) {
+				responseJSON.put("index",index);
+			}
 			writeMessage(response,responseJSON);
 		} catch (SQLException e) {	
 			JSONObject errorObject =  new JSONObject();
@@ -375,6 +377,36 @@ public class Training extends MVCPortlet {
 	
 	}
 	
+	@SuppressWarnings("unchecked")
+	public void sendMaterialsForm(ActionRequest request, ActionResponse response)
+			throws PortletException, IOException {
+		// Getting a file and saving it to the "uploads" folder
+		
+		String folder = getInitParameter("uploadFolder");
+		String realPath = getPortletContext().getRealPath("/");
+		UploadPortletRequest upr = PortalUtil.getUploadPortletRequest(request);
+		File file = upr.getFile("picture_1");
+		if (file != null) {
+			String filename = upr.getFileName("picture_1");
+			File newFile = null;
+			newFile = new File(realPath + folder + filename);
+			System.out.println(realPath + folder + filename);
+			newFile.createNewFile();
+			InputStream in = new BufferedInputStream(upr.getFileAsStream("picture_1"));
+			FileInputStream fis = new FileInputStream(file);
+			FileOutputStream fos = new FileOutputStream(newFile);
+			
+			byte[] bytes_ = FileUtil.getBytes(in);
+			int j = fis.read(bytes_);
+			
+			while (j != -1) {
+				fos.write(bytes_, 0, j);
+				j = fis.read(bytes_);
+			}
+			fis.close();
+			fos.close();
+		}
+	}
 	
 	@SuppressWarnings("unchecked")
 	public void sendForm(ActionRequest request, ActionResponse response)
@@ -411,34 +443,6 @@ public class Training extends MVCPortlet {
 			errorObject.put("details", e.getMessage());
 			writeMessage(response,errorObject);
 			return;
-		}
-		
-		
-		// Getting a file and saving it to the "uploads" folder
-		
-		String folder = getInitParameter("uploadFolder");
-		String realPath = getPortletContext().getRealPath("/");
-		UploadPortletRequest upr = PortalUtil.getUploadPortletRequest(request);
-		File file = upr.getFile("picture_1");
-		if (file != null) {
-			String filename = upr.getFileName("picture_1");
-			File newFile = null;
-			newFile = new File(realPath + folder + filename);
-			System.out.println(realPath + folder + filename);
-			newFile.createNewFile();
-			InputStream in = new BufferedInputStream(upr.getFileAsStream("picture_1"));
-			FileInputStream fis = new FileInputStream(file);
-			FileOutputStream fos = new FileOutputStream(newFile);
-			
-			byte[] bytes_ = FileUtil.getBytes(in);
-			int j = fis.read(bytes_);
-			
-			while (j != -1) {
-				fos.write(bytes_, 0, j);
-				j = fis.read(bytes_);
-			}
-			fis.close();
-			fos.close();
 		}
 	}
 
@@ -653,9 +657,6 @@ public class Training extends MVCPortlet {
 		 if ("getTreatment".equals(resourceID)) {
 			 getTreatment(request, response);		 }
 		 
-		 if ("sendForm".equals(resourceID)) {
-			 //sendForm(request, response);
-		 }
 	}
 
 }

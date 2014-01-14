@@ -1,12 +1,12 @@
 <%@ include file="/jsp/init.jsp" %>
 
-<portlet:resourceURL id="getTopCategories" var="getTopCategories">
+<portlet:resourceURL id="getCategories" var="getCategories">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 </portlet:resourceURL>
 <portlet:resourceURL id="getSubCategories" var="getSubCategories">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 </portlet:resourceURL>
-<portlet:actionURL name="sendForm" var="sendFormURL">
+<portlet:actionURL name="sendMaterialsForm" var="sendFormURL">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 	<portlet:param name="jspPage" value="/jsp/trainingFront.jsp"></portlet:param>
 </portlet:actionURL>
@@ -18,7 +18,7 @@ $(document).ready(function() {
 	
 	// Fill categories dropdown menu
 	
-	var url = '<%=getTopCategories%>';
+	var url = '<%=getCategories%>';
 	$("#statusgif").show();
 	
 	var request = jQuery.getJSON(url);
@@ -31,12 +31,16 @@ $(document).ready(function() {
 		else {
 			var dropdown = document.getElementById("topCategories");
 			var catIDs = ""; 
-			for (var i in data) {							// Add categories to dropdown menu
-				var categoryOpt = $("<option>");
-				categoryOpt
-					.text(data[i].name)
-					.appendTo(dropdown);
-				catIDs += data[i].id + ",";
+			var keys = Object.keys(data);
+			for (var i in keys) {							// Add categories to dropdown menu
+				var key = parseInt(keys[i]);
+				if (data[key] != null) {
+					var categoryOpt = $("<option>");
+					categoryOpt
+						.text(data[key])
+						.appendTo(dropdown);
+					catIDs += key + ",";
+				}
 			}
 			$("#topCategories").attr("catIDs", catIDs);
 		}

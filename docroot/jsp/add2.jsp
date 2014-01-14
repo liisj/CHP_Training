@@ -48,7 +48,7 @@ function addSymptomField(divId, type, currentDiag, symptomIndex) {
 	var form = document.getElementById(divId);
 	var nameInLbl = $("<label>");
 	nameInLbl
-		.text("Symptom name: ")
+		.text("*Symptom name: ")
 		.attr("for", type + "Symptom_" + index)
 		.addClass(type + "Symptom")
 		.appendTo(form);
@@ -87,7 +87,7 @@ function addSubDiagnosis(divId) {
 		.appendTo(surroundDiv);
 	var nameInLbl = $("<label>");
 	nameInLbl
-		.text("Diagnosis name: ")
+		.text("*Diagnosis name: ")
 		.attr("for", "diagnosis_" + diagnosisIndex)
 		.appendTo(nameBox);
 	var nameIn = $("<input>");
@@ -99,7 +99,7 @@ function addSubDiagnosis(divId) {
 	$("<p>").appendTo(nameBox);
 	var treatmentInLbl = $("<label>");
 	treatmentInLbl
-		.text("Treatment info: ")
+		.text("*Treatment info: ")
 		.attr("for", "treatment_" + diagnosisIndex)
 		.addClass("treatmentLbl")
 		.appendTo(nameBox);
@@ -134,7 +134,7 @@ function addSubDiagnosis(divId) {
 	$("<p>").appendTo(symptomBox);
 	nrLbl
 		.attr("for","symptomNr_" + diagnosisIndex)
-		.text("How many symptoms need to be present to give this diagnosis? ")
+		.text("*How many symptoms need to be present to give this diagnosis? ")
 		.appendTo(symptomBox);
 	var nrIn = $("<input>");
 	nrIn
@@ -154,7 +154,7 @@ function addSubDiagnosis(divId) {
 <form name="addForm" method="POST" action='<%=sendFormURL.toString()%>'>
 <div id="formDiv">
 <div class="box">
-General diagnosis class: <input type="text" name="general">
+*General diagnosis class: <input type="text" name="general">
 </div>
 <div class="box">
 <div id="generalSymptoms">
@@ -162,7 +162,7 @@ General diagnosis class: <input type="text" name="general">
 </div>
 <span class="addSymptom" id="generalAddSympBtn" div="generalSymptoms" type="general">New symptom</span>
 <p/>
-<label for="generalNr">How many symptoms need to be present to give this diagnosis? </label>
+<label for="generalNr">*How many symptoms need to be present to give this diagnosis? </label>
 <input type="text" id="generalNr" name="generalNr"/>
 </div>
 Sub-diagnoses<p/>

@@ -66,6 +66,7 @@ $(document).on("click",".nextBtn",function(){
 	request.done(function(data) {
 		displayQuestions(data);
 	});
+	$(this).hide();
 });
 
 function displayQuestions(data) {
