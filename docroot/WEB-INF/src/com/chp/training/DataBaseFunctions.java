@@ -100,8 +100,8 @@ public class DataBaseFunctions {
 
 
 	public static JSONObject addCategory(Connection con, JSONObject parameters) {
-		String category = parameters.get("category").toString();
-		Integer parent = Integer.valueOf(parameters.get("parent").toString());
+		String category = parameters.get("category_name").toString();
+		Integer parent = Integer.valueOf(parameters.get("parent_id").toString());
 		String material_title = parameters.get("material_title").toString();
 		String material_text = parameters.get("material_text").toString();
 		String material_pic = parameters.get("material_pic").toString();
@@ -152,7 +152,7 @@ public class DataBaseFunctions {
 	}
 
 	public static JSONObject addMaterial(Connection con, JSONObject parameters) {
-		String category = parameters.get("category").toString();
+		String category = parameters.get("category_id").toString();
 		String material_title = parameters.get("material_title").toString();
 		String material_text = parameters.get("material_text").toString();
 		String material_pic = parameters.get("material_pic").toString();
@@ -186,8 +186,7 @@ public class DataBaseFunctions {
 			while (rs.next()) {
 				int id = rs.getInt(1);
 				int pic = rs.getInt(1);
-				result.put("id", id);
-				result.put("pic", pic);
+				result.put(id, pic);
 			}
 			return result;
 		} catch (SQLException e) {
