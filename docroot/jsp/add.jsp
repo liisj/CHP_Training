@@ -6,6 +6,9 @@
 <portlet:resourceURL id="getSubCategories" var="getSubCategories">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 </portlet:resourceURL>
+<portlet:resourceURL id="addMaterial" var="addMaterial">
+	<portlet:param name="ajaxAction" value="getData"></portlet:param>
+</portlet:resourceURL>
 <portlet:actionURL name="sendMaterialsForm" var="sendFormURL">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 	<portlet:param name="jspPage" value="/jsp/trainingFront.jsp"></portlet:param>
@@ -56,9 +59,9 @@ $(document).on("change","#topCategories",function() {
 	var catIDs = catMenu.getAttribute("catIDs").split(",");
 	var category_id = catIDs[catMenu.selectedIndex - 1];
 	
-	var request = $.getJSON('<%=getSubCategories%>', {"id": category_id});
+	var request = $.getJSON('<%=getCategories%>', {"category": category_id});
 	request.done(function(data) {
-		
+		console.log(data);
 		$("<p>").appendTo($("#dropdowns"));
 		
 		var label = $("<label>");
@@ -74,12 +77,13 @@ $(document).on("change","#topCategories",function() {
 			.attr("id", "subCategories");
 		$("<option>").appendTo(dropdown);
 		catIDs2 = "";
-		for (var i in data.objects) {
+		var keys = Object.keys(data);
+		for (var i in keys) {
 			var option = $("<option>");
 			option
 				.appendTo(dropdown)
-				.text(data.objects[i].name);
-			catIDs2 += data.objects[i].id + ",";
+				.text(data[keys[i]]);
+			catIDs2 += keys[i] + ",";
 		}
 		$("#subCategories").attr("catIDs", catIDs2);
 	});
@@ -87,7 +91,20 @@ $(document).on("change","#topCategories",function() {
 });
 
 $(document).on("click","#saveBtn", function() {
-	document.forms['addForm'].submit();
+	var parameters = {};
+	parameters["material_title"] = $("#materialTitle").val();
+	parameters["material_text"] = $("#textarea").val();
+	parameters["material_pic"] = "false";
+	
+	var catMenu = document.getElementById("subCategories");
+	var catIDs = catMenu.getAttribute("catIDs").split(",");
+	var category_id = catIDs[catMenu.selectedIndex - 1];
+	
+	parameters["category_id"] = category_id;
+	
+	console.log(parameters);
+	var request = $.getJSON('<%=addMaterial%>', parameters);
+	//document.forms['addForm'].submit();
 });
 </script>
 </head>

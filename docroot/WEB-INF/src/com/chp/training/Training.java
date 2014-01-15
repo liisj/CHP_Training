@@ -136,9 +136,14 @@ public class Training extends MVCPortlet {
 
 		JSONObject parameters = requestToJSONObject(request);
 		
+		String index = ParamUtil.getString(request, "index");
+		String categoryId = ParamUtil.getString(request, "category_id");
+		
 		try {
 			Connection con = DataBaseFunctions.getWebConnection();
 			responseJSON = DataBaseFunctions.getMaterial(con,parameters);
+			responseJSON.put("index", index);
+			responseJSON.put("category_id", categoryId);
 			writeMessage(response,responseJSON);
 		} catch (SQLException e) {	
 			JSONObject errorObject =  new JSONObject();
@@ -149,12 +154,14 @@ public class Training extends MVCPortlet {
 		}
 	}
 
-	public void addMaterial(ResourceRequest request, ResourceResponse response)
+	public void addMaterial(PortletRequest request, PortletResponse response)
 			throws PortletException, IOException {
 		
 		JSONObject responseJSON = new JSONObject();
 
 		JSONObject parameters = requestToJSONObject(request);
+		System.out.println("addMaterials parameters: " + parameters.toString());
+		System.out.println(ParamUtil.getString(request, "materialTitle"));
 		
 		try {
 			Connection con = DataBaseFunctions.getWebConnection();
@@ -382,11 +389,14 @@ public class Training extends MVCPortlet {
 			throws PortletException, IOException {
 		// Getting a file and saving it to the "uploads" folder
 		
+		System.out.println(requestToJSONObject(request).toString());
+		
 		String folder = getInitParameter("uploadFolder");
 		String realPath = getPortletContext().getRealPath("/");
 		UploadPortletRequest upr = PortalUtil.getUploadPortletRequest(request);
 		File file = upr.getFile("picture_1");
 		if (file != null) {
+			
 			String filename = upr.getFileName("picture_1");
 			File newFile = null;
 			newFile = new File(realPath + folder + filename);
@@ -575,7 +585,8 @@ public class Training extends MVCPortlet {
                 }
         	}
         	else if (actionName.equals("materials")) {
-        		String catId2 = actionRequest.getParameter("id");
+        		String catId2 = actionRequest.getParameter("mat_id");
+        		System.out.println("catId2: " + catId2);
                 if (catId2 != null) {
                     actionRequest.setAttribute("mat_id", catId2);
                 }

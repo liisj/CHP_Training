@@ -152,7 +152,7 @@ public class DataBaseFunctions {
 	}
 
 	public static JSONObject addMaterial(Connection con, JSONObject parameters) {
-		String category = parameters.get("category_id").toString();
+		String categoryS = parameters.get("category_id").toString();
 		String material_title = parameters.get("material_title").toString();
 		String material_text = parameters.get("material_text").toString();
 		String material_pic = parameters.get("material_pic").toString();
@@ -168,11 +168,11 @@ public class DataBaseFunctions {
 		}
 		
 		try {
-			int p = 0;
+			int p = 1;
 			addCat.setString(p++, material_title);
 			addCat.setString(p++, material_text);
 			addCat.setBoolean(p++, insert_pic);
-			addCat.setString(p++, category);
+			addCat.setInt(p++, Integer.valueOf(categoryS));
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -237,11 +237,11 @@ public class DataBaseFunctions {
 	}
 
 	public static JSONObject getMaterial(Connection con, JSONObject parameters) {
-		Integer parent = Integer.valueOf(parameters.get("category").toString());
+		Integer parent = Integer.valueOf(parameters.get("category_id").toString());
 		PreparedStatement pstmt = null;
 		try {
 			pstmt = con
-					.prepareStatement("SELECT material_title,material_text,material_pic FROM categories c WHERE parent_category = ?");
+					.prepareStatement("SELECT material_title,material_text,material_pic FROM categories c WHERE id = ?");
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

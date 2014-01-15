@@ -11,7 +11,7 @@ ActionRequest.ACTION_NAME, "search");*/
 <portlet:resourceURL id="getCategories" var="getCategories">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 </portlet:resourceURL>
-<portlet:resourceURL id="getMaterialTitles" var="getMaterialTitles">
+<portlet:resourceURL id="getMaterial" var="getMaterial">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 </portlet:resourceURL>
 <portlet:resourceURL id="getTopQuestions" var="getTopQuestions">
@@ -99,26 +99,33 @@ $(document).ready(function() {
 								.attr("id", "innerDiv2_" + data2.index + "_" + j);
 							
 							// For each, query the material titles that are in that category
-							var materialsRequest = $.getJSON('<%=getMaterialTitles%>', {"index" : j});
+							var materialsRequest = $.getJSON('<%=getMaterial%>', {"index" : j, "category_id" : key2});
 							materialsRequest.done(function(data3) {
-								var innerDiv_super2 = 
-									document.getElementById("innerDiv2_" + data2.index + "_" + data3.index);
-								for (var k in data3.objects) {
+								console.log("data3: ");
+								console.log(data3);
+								
+								if (data3.material_title != null) {
+									var innerDiv_super2 = 
+										document.getElementById("innerDiv2_" + data2.index + "_" + data3.index);
+								
 									var matForm = $("<form>");
 									matForm
 										.attr("method", "POST")
-										.attr("name", "matForm_" + k)
+										.attr("name", "matForm")
 										.attr("action", '<%=materialURL%>')
 										.appendTo(innerDiv_super2);
 									var mat = $("<button>");
 									mat
-										.text(data3.objects[k].title)
-										.attr("mat_id",data3.objects[k].id)
-										.attr("id", "mat_" + k)
-										.attr("k",k)
+										.text(data3["material_title"])
 										.attr("type","submit")
 										.addClass("matTitle")
 										.button()
+										.appendTo(matForm);
+									var idHidden = $("<input>");
+									idHidden
+										.attr("type","hidden")
+										.attr("name", "mat_id")
+										.val(data3["category_id"])
 										.appendTo(matForm);
 									$("<p>").appendTo(innerDiv_super2);
 								}

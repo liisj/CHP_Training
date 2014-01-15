@@ -1,6 +1,6 @@
 <%@ include file="/jsp/init.jsp" %>
 
-<portlet:resourceURL id="getMaterialContent" var="getMaterialContent">
+<portlet:resourceURL id="getMaterial" var="getMaterial">
 	<portlet:param name="ajaxAction" value="getData"></portlet:param>
 </portlet:resourceURL>
 
@@ -13,10 +13,12 @@ String matId = (String) request.getAttribute("mat_id");
 <script type="text/javascript">
 $(document).ready(function() {
 	
-	var request = $.getJSON('<%=getMaterialContent%>', {"id": '<%=matId%>'});
+	console.log('<%=matId%>');
+	var request = $.getJSON('<%=getMaterial%>', {"category_id": '<%=matId%>'});
 	request.done(function(data) {
-		$("#materialTitle").html(data.title);
-		$("#materialBody").html(data.text);
+		console.log(data);
+		$("#materialTitle").html(data["material_title"]);
+		$("#materialBody").html(data["material_text"]);
 	});
 });
 </script>
