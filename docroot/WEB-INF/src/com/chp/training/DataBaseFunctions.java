@@ -303,28 +303,12 @@ public class DataBaseFunctions {
 		JSONArray jsonQuestions = (JSONArray) questionBox.remove("questions");
 		// System.out.println("Questions: " + jsonQuestions.toString());
 		Object descriptionO = questionBox.remove("description");
-		// if (descriptionO==null) {
-		// throw new IllegalArgumentException(String.format(
-		// "description (of the questionBox) was not provided as parameter.\n"
-		// + "Function: insertNewQuestionPath()\n" + "Parameters: %s",
-		// Helper.niceJsonPrint(parameters, "")));
-		// }
+
 		String description = descriptionO == null ? "" : descriptionO
 				.toString();
 		int questionNum = jsonQuestions.size();
 		// String[] questionStrings = new String[questionNum];
 		int count = 0;
-
-		// for (Object questionObject : jsonQuestions) {
-		// JSONObject jsonQuestion = (JSONObject) questionObject;
-		// String question = jsonQuestion.get("question").toString();
-		// Object questionDetO = jsonQuestion.get("details");
-		// String questionDet = questionDetO==null?"":questionDetO.toString();
-		// String questionString = "(" + question + "," + questionDet + ")";
-		// questionStrings[count++] = questionString;
-		// // System.out.println("one question String: " + questionString);
-		// }
-
 		String[] q_questionss = new String[questionNum];
 		String[] q_details = new String[questionNum];
 
@@ -384,29 +368,7 @@ public class DataBaseFunctions {
 	/**
 	 * 
 	 * @param con
-	 * @param parameters
-	 *            A questionBox as a JSONObject which has the following
-	 *            parameters:<br>
-	 *            topic_title : String,<br>
-	 *            topic_description : String,<br>
-	 *            questions : JSONArray "Questions" (see below) <br>
-	 *            Additionally key-value pairs as the following should be
-	 *            provided. The value of these decide whether to give a direct
-	 *            treatment (String) or another QuestionBox depending on how
-	 *            many questions have been answered with yes (key):<br>
-	 *            (int) : (ActionObject)<br>
-	 * <br>
-	 *            An ActionObject can be one of the following JSONObjects: {
-	 *            action: treatment treatment: { } }
-	 * 
-	 * 
-	 *            If you give another QuestionBox as a value (which would end in
-	 *            some kind of recursion, this Questionbox does NOT need to
-	 *            provide topic_title or topic_description. <br>
-	 * <br>
-	 *            JSONArray "Questions" contains JSONObjects as the following:<br>
-	 *            question : String <br>
-	 *            details : String <br>
+	 * @param parameters Check the developer's guide.
 	 * @throws SQLException
 	 * 
 	 */
@@ -629,70 +591,7 @@ public class DataBaseFunctions {
 	/**
 	 * 
 	 * @param con
-	 * @param parameters
-	 *            JSON Object with the following parameters:<br>
-	 *            topic : (int)<br>
-	 *            CONDITIONAL MANDATORY: yes_count : (int, mandatory if and only
-	 *            if session is provided) OPTIONAL: session : (String, see
-	 *            below, obviously not needed for first QuestionBox)<br>
-	 * @return One of the following JSON Objects:<br>
-	 *         {<br>
-	 *         action : "treatment",<br>
-	 *         treatment:<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id : (int), description :
-	 *         (String),<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-	 *         }<br>
-	 * <br>
-	 *         {<br>
-	 *         action : "change_topic",<br>
-	 *         topic:<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id : (int), title : (String),
-	 *         description : (String),<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-	 *         question_box:<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id : (int), description :
-	 *         (String),<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;questions : [<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;{<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;question : (String),<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;details : (String)<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;}<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;...<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;]<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-	 *         }<br>
-	 * <br>
-	 *         {<br>
-	 *         action : "next_box",<br>
-	 *         question_box:<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id : (int), description :
-	 *         (String),<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;questions : [<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;{<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;question : (String),<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;details : (String)<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;}<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;...<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
-	 *         ;&nbsp;]<br>
-	 *         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-	 *         }
+	 * @param parameters Check developer's guide
 	 * @throws SQLException
 	 * @throws ParseException
 	 */
@@ -786,114 +685,6 @@ public class DataBaseFunctions {
 		String jsonString = rs.getString(1);
 		JSONObject json = (JSONObject) jsonParser.parse(jsonString);
 		return json;
-	}
-
-	@SuppressWarnings("unchecked")
-	public static void main(String[] args) {
-		Connection con;
-		try {
-			con = getWebConnection();
-			// String a = "{ \"topic\": " +
-			// "{ \"title\": \"gd_b\" }, " +
-			// "\"questionbox\": { " +
-			// "\"questions\": [{ \"details\": \"d1\", \"question\": \"s1\" }] "
-			// +
-			// "}, " +
-			// "\"1,\": { " +
-			// "\"questionbox\": { " +
-			// "\"1,\": { " +
-			// "\"treatment\": { " +
-			// "\"description\": \"t1\" " +
-			// "}, " +
-			// "\"action\": \"treatment\" " +
-			// "}, " +
-			// "\"description\": \"sd1\", " +
-			// "\"0,\": { \"action\": \"next_topic\" }, " +
-			// "\"questions\": [{ \"details\": \"sd11\", \"question\": \"ss11\" }] "
-			// +
-			// "}, " +
-			// "\"action\": \"next_box\" " +
-			// "}, \"0,\": { \"action\": \"next_topic\" } }";
-			// JSONParser jp = new JSONParser();
-			// JSONObject o = (JSONObject) jp.parse(a);
-			// System.out.println(Helper.niceJsonPrint(o, ""));
-			// insertNewQuestionPath(con, o);
-			// JSONArray object = getTopics(con);
-			// System.out.println("All topics");
-			// System.out.println(Helper.niceJsonPrint(object, ""));
-			//
-			// JSONObject parameters;
-			// JSONObject result;
-			//
-			// parameters = new JSONObject();
-			// parameters.put("topic", 37);
-			// result = getFirstQuestionBox(con, parameters);
-			// System.out
-			// .println("First Question Box (delivered with topic details):");
-			// System.out.println(result.toJSONString());
-			// System.out.println();
-			//
-			// parameters = new JSONObject();
-			// parameters.put("questionbox", 25);
-			// parameters.put("yes_count", 0);
-			// result = getNextAction(con, parameters);
-			// System.out.println("Questions answered with yes: 0");
-			// System.out.println("Next Action: " + result.get("action"));
-			// System.out.println(result.toJSONString());
-			// System.out.println();
-			//
-			// parameters = new JSONObject();
-			// parameters.put("questionbox", 25);
-			// parameters.put("yes_count", 1);
-			// result = getNextAction(con, parameters);
-			// System.out.println("Questions answered with yes: 1");
-			// System.out.println("Next Action: " + result.get("action"));
-			// System.out.println(result.toJSONString());
-			// System.out.println();
-			//
-			// parameters = new JSONObject();
-			// parameters.put("questionbox", 1);
-			// parameters.put("yes_count", 2);
-			// result = getNextAction(con, parameters);
-			// System.out.println("Questions answered with yes: 2");
-			// System.out.println("Next Action: " + result.get("action"));
-			// System.out.println(Helper.niceJsonPrint(result, ""));
-			// System.out.println();
-
-			// JSONObject ob = getTopCategories(con);
-			// System.out.println(ob.toJSONString());
-			// JSONObject in1 = new JSONObject();
-			// in1.put("path", 5);
-			// JSONObject res1 = getNextCategories(con, in1);
-			// System.out.println(res1.toJSONString());
-			//
-			// JSONObject in2 = new JSONObject();
-			// in2.put("path", "5.10");
-			// JSONObject res2 = getNextCategories(con, in2);
-			// System.out.println(res2.toJSONString());
-			//
-			// JSONObject in3 = new JSONObject();
-			// in3.put("path", "5.10.13");
-			// JSONObject res3 = getNextCategories(con, in3);
-			// System.out.println(res3.toJSONString());
-
-			JSONObject p1 = new JSONObject();
-			p1.put("category", "null");
-			JSONObject r1 = getCategories(con, p1);
-			System.out.println(r1.toJSONString());
-
-			JSONObject p2 = new JSONObject();
-			p1.put("category", "5");
-			JSONObject r2 = getCategories(con, p1);
-			System.out.println(r2.toJSONString());
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 	}
 
 }
