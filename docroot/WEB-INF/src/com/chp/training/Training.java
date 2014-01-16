@@ -88,6 +88,8 @@ public class Training extends MVCPortlet {
 	public void getCategories(ResourceRequest request, ResourceResponse response)
 			throws PortletException, IOException {
 		
+		System.out.println("getCategoreis");
+		
 		String index = request.getParameter("index");
 		JSONObject responseJSON = new JSONObject();
 
